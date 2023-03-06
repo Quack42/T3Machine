@@ -1,0 +1,26 @@
+#pragma once
+
+#include "MyGPIO.h"
+
+
+template<typename Platform>
+class M415C {
+private:
+	PinData<Platform> & stepPin;
+	PinData<Platform> & directionPin;
+public:
+	M415C(PinData<Platform> & stepPin, PinData<Platform> & directionPin) :
+			stepPin(stepPin),
+			directionPin(directionPin)
+	{
+
+	}
+
+	void setStepPin(const bool & pinValue) {
+		stepPin.setValue(pinValue);
+	}
+
+	void setDirectionPin(const bool & pinValue) {
+		directionPin.setValue(pinValue);
+	}
+};

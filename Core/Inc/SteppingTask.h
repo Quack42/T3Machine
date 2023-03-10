@@ -5,9 +5,11 @@
 template<typename Driver, typename Platform>
 class SteppingTask {
 private:
-	constexpr static float kStepHighTime = 0.5f;
-	constexpr static float kStepLowTime = 0.5f;
+	constexpr static float kDefaultStepHighTime = 0.5f;
+	constexpr static float kDefaultStepLowTime = 0.5f;
 	//variables
+	float stepHighTime;
+	float stepLowTime;
 	TimeCountDown stepTime;
 	int steps;
 	enum {
@@ -15,24 +17,41 @@ private:
 		e_toInitiate,
 		e_toStepHigh,
 		e_toStepLow
-	} state;
+	} state = e_idle;
 	bool stopping;
 	//references
-	Driver & driver;
 	TimingManager<Platform> & timingManager;
+	Driver & driver;
+	int & positionIndex;
 
 public:
-	SteppingTask(Driver & driver, TimingManager<Platform> & timingManager) :
+	SteppingTask(TimingManager<Platform> & timingManager, Driver & driver, int & positionIndex, float stepHighTime = kDefaultStepHighTime, float stepLowTime = kDefaultStepLowTime) :
+			//constants
+			stepHighTime(stepHighTime),
+			stepLowTime(stepLowTime),
 			//variables
-			stepTime(kStepLowTime),
+			stepTime(stepLowTime),
 			steps(0),
 			state(e_idle),
 			stopping(false),
 			//references
+			timingManager(timingManager),
 			driver(driver),
-			timingManager(timingManager)
+			positionIndex(positionIndex)
 	{
 
+	}
+
+	void setStepHighTime(const float & stepHighTime) {
+		this->stepHighTime = stepHighTime;
+	}
+
+	void setStepLowTime(const float & stepLowTime) {
+		this->stepLowTime = stepLowTime;
+	}
+
+	bool isActive() {
+		return (state != e_idle);
 	}
 
 	void startSteppingTask(int steps) {
@@ -55,8 +74,8 @@ public:
 		stepTime.countDown(timePassed);
 		if (stepTime.isReady()) {
 			switch(state) {
-				default:
 				case e_idle:
+					//do nothing
 					break;
 				case e_toInitiate:
 					initiateStepping();
@@ -66,6 +85,9 @@ public:
 					break;
 				case e_toStepLow:
 					stepLow();
+					break;
+				default:
+					//do nothing
 					break;
 			}
 		}
@@ -81,21 +103,22 @@ private:
 	}
 
 	//task functions
-	void step() {
-		driver.step();
-		timingManager.scheduleWakeup();
-	}
+	// void step() {
+	// 	driver.step();
+	// 	timingManager.scheduleWakeup();
+	// }
 
 	void stepHigh() {
 		driver.setStepPin(true);
-		stepTime.setTimeCountDown(kStepHighTime);
+		stepTime.setTimeCountDown(stepHighTime);
 		timingManager.scheduleWakeup(stepTime.getRemainingTime());
 		state = e_toStepLow;
 	}
 
 	void stepLow() {
 		driver.setStepPin(false);
-		stepTime.setTimeCountDown(kStepLowTime);
+		positionIndex++; 	//update position index
+		stepTime.setTimeCountDown(stepLowTime);
 		timingManager.scheduleWakeup(stepTime.getRemainingTime());
 		//reduce number of steps to take
 		if (steps > 0) {
@@ -104,7 +127,7 @@ private:
 			steps++;
 		}
 		//check if steps are done
-		if (steps == 0) {
+		if (steps == 0 || stopping) {
 			//steps are done
 			state = e_idle;
 		} else {

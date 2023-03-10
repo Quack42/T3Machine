@@ -40,6 +40,8 @@ float TimingManager<Stm32F407Platform>::sleep() {
 		float countsOfSleep = __HAL_TIM_GET_COUNTER(&htim);
 		HAL_TIM_Base_Stop_IT(&htim);
 		timeSlept = (countsOfSleep) / 10.f;
+	} else {
+		timeSlept = 0;
 	}
 
 //	HAL_Delay(sleepTime); 	//TODO: use timer

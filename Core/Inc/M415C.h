@@ -16,8 +16,13 @@ public:
 
 	}
 
+	void init() {
+		// stepPin.setValue(true);
+		// directionPin.setValue(true);
+	}
+
 	void setStepPin(const bool & pinValue) {
-		stepPin.setValue(pinValue);
+		stepPin.setValue(!pinValue); 	//TODO: figure out if the step takes place on low->high or high->low
 	}
 
 	void setDirectionPin(const bool & pinValue) {

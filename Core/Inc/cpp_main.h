@@ -26,8 +26,8 @@
 
 
 EXTERNC void cpp_main(void);
-EXTERNC void CPP_HAL_GPIO_EXTI_Callback(uint16_t pin);
-EXTERNC void CPP_HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef * htim);
+EXTERNC void CPP_HAL_GPIO_EXTI_Callback(uint16_t pin); 	//TODO: move this elsewhere; keep cpp_main platform agnostic
+EXTERNC void CPP_HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef * htim); 	 	//TODO: move this elsewhere; keep cpp_main platform agnostic
 #undef EXTERNC
 
 #endif /* INC_CPP_MAIN_H_ */

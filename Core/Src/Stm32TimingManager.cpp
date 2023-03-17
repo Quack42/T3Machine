@@ -49,4 +49,3 @@ float TimingManager<Stm32F407Platform>::sleep() {
 	////HAL_PWR_EnterSLEEPMode(PWR_MAINREGULATOR_ON, PWR_SLEEPENTRY_WFI);
 	return timeSlept;
 }
-

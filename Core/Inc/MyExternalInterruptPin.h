@@ -18,20 +18,38 @@ private:
 	bool flaggedInterrupt = false;
 	bool activeLow = false;
 
+	SubscriptionNode * firstSubscription;
+	ProcessRequest advertiseProcess;
+
 public:
 	ExternalInterruptPin(ProcessManager<Platform> & processManager, PinIdentifier<Platform> & pinIdentifier, const bool & activeLow) :
 			processManager(processManager),
 			pinIdentifier(pinIdentifier),
-			activeLow(activeLow)
+			activeLow(activeLow),
+			advertiseProcess(std::bind(&ExternalInterruptPin::advertise, this))
 	{
 
 	}
+
+	void registerSubscription(SubscriptionNode & subscription) {
+		if (firstSubscription == nullptr) {
+			firstSubscription = &subscription;
+		} else {
+			SubscriptionNode * current = firstSubscription;
+			while (current->next != nullptr) {
+				current = current->next;
+			}
+			current->next = &subscription;
+		}
+	}
+	//TODO: void removeSubscription(SubscriptionNode * subscription) ..
 
 	void init();
 	bool getValue();
 
 	void flagInterrupt() {
 		flaggedInterrupt = true;
+		processManager.requestProcess(advertiseProcess);
 	}
 
 	bool isInterruptFlagged() {
@@ -43,6 +61,14 @@ public:
 
 	PinIdentifier<Platform> & getPinIdentifier() {
 		return pinIdentifier;
+	}
+
+private:
+	void advertise() {
+		SubscriptionNode * current = firstSubscription;
+		while (current != nullptr) {
+			processManager.requestProcess(current->getProcessRequest());
+		}
 	}
 };
 

@@ -1,5 +1,7 @@
 #include "Devices.h"
 
+#include "FuzzyFilter.h"
+
 //platform
 ProcessManager<Platform> processManager;
 
@@ -21,6 +23,11 @@ ExternalInterruptPin<Platform> button(processManager, button_pinIdentifier, fals
 ExternalInterruptPin<Platform> sensor_X(processManager, sensor_X_pinIdentifier, true);
 ExternalInterruptPin<Platform> sensor_Y(processManager, sensor_Y_pinIdentifier, true);
 ExternalInterruptPin<Platform> sensor_Z(processManager, sensor_Z_pinIdentifier, true);
+
+//filter
+FuzzyFilter<ExternalInterruptPin<Platform>, Platform> sensor_X_filter(timingManager, sensor_X);
+
+SubscriptionNode sensor_X_filter_sub([](){sensor_X_filter.inputUpdate();});
 
 //devices
 M415C<Platform> m415c_X(stepPin_X, directionPin_X);

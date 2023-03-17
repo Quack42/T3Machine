@@ -115,9 +115,12 @@ void cpp_main(void) {
 		float timeSlept = timingManager.sleep();
 		ld4.toggle();
 
+		// HAL_Delay(10000.f); 	//TODO: use timer
+
 		//update time sensitive tasks
 		// steppingTask.tick(timeSlept);
 
 		t3Machine.tick(timeSlept);
+		// processManager.execute();
 	}
 }

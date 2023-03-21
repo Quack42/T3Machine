@@ -16,12 +16,12 @@
 #include "stm32f4xx_hal.h"
 
 template<>
-bool ExternalInterruptPin<Stm32F407Platform>::getValue() {
-	return (HAL_GPIO_ReadPin(pinIdentifier.getPort(), pinIdentifier.getPin()) == GPIO_PIN_SET) != activeLow;
+bool ExternalInterruptPin<Stm32F407Platform>::_getValue() {
+	return (HAL_GPIO_ReadPin(pinIdentifier.getPort(), pinIdentifier.getPin()) == GPIO_PIN_SET);
 }
 
 template<>
-void ExternalInterruptPin<Stm32F407Platform>::init() {
+void ExternalInterruptPin<Stm32F407Platform>::_init() {
 	GPIO_InitTypeDef GPIO_InitStruct = {0};
 	GPIO_InitStruct.Pin = pinIdentifier.getPin();
 	GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING; 	//TODO: make this configurable
@@ -62,4 +62,3 @@ void ExternalInterruptPin<Stm32F407Platform>::init() {
 			break;
 	}
 }
-

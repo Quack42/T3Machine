@@ -4,6 +4,8 @@
 
 //platform
 ProcessManager<Platform> processManager;
+TimingManager<Platform> timingManager(processManager, timingManagerTimer);
+
 
 //output pins
 PinData<Platform> ld3(ld3_pinIdentifier);
@@ -19,10 +21,10 @@ PinData<Platform> directionPin_Y(directionPin_Y_pinIdentifier);
 PinData<Platform> directionPin_Z(directionPin_Z_pinIdentifier);
 
 //interrupt pins
-ExternalInterruptPin<Platform> button(processManager, button_pinIdentifier, false);
-ExternalInterruptPin<Platform> sensor_X(processManager, sensor_X_pinIdentifier, true);
-ExternalInterruptPin<Platform> sensor_Y(processManager, sensor_Y_pinIdentifier, true);
-ExternalInterruptPin<Platform> sensor_Z(processManager, sensor_Z_pinIdentifier, true);
+ExternalInterruptPin<Platform> button(processManager, button_pinIdentifier);
+ExternalInterruptPin<Platform> sensor_X(processManager, sensor_X_pinIdentifier); 	//Active Low
+ExternalInterruptPin<Platform> sensor_Y(processManager, sensor_Y_pinIdentifier); 	//Active Low
+ExternalInterruptPin<Platform> sensor_Z(processManager, sensor_Z_pinIdentifier); 	//Active Low
 
 //filter
 FuzzyFilter<ExternalInterruptPin<Platform>, Platform> sensor_X_filter(timingManager, sensor_X);

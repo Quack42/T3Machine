@@ -1,6 +1,6 @@
 #pragma once
 
 template<typename Platform>
-class PinIdentifier {
+class TimerData {
 //NOTE: only specialized classes
 };

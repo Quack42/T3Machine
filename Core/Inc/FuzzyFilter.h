@@ -42,7 +42,6 @@ public:
 	void inputUpdate() {
 		bool newValue = input.getValue();
 
-		//TODO: continue here
 		float timePassed = 0.f; //TODO: get time since last update 	
 		float ratio = timePassed/fullSwitchTime;
 

@@ -83,6 +83,26 @@
 // 		sensor_Z
 // 	);
 
+
+template<typename Platform>
+class LedController {
+private:
+	PinData<Platform> & ld;
+public:
+	LedController(PinData<Platform> & ld) : ld(ld) {}
+
+	void input(bool inputValue) {
+		if (inputValue) {
+			//button is pressed
+			ld.high();
+		} else {
+			//button is released
+			ld.low();
+		}
+	}
+};
+LedController<Platform> ledController(ld3);
+
 void cpp_main(void) {
 	//init platform
 	timingManager.init();
@@ -108,19 +128,39 @@ void cpp_main(void) {
 	m415c_Y.init();
 	drv8825_Z.init();
 
+	////////////////////////
+	// Setup connection
+
+	button.setSubscriberFunction([](bool pinValue){ledController.input(pinValue);});
+
+	////////////////////////
+	timingManager.start(); 	//'startRunning'
+
+// #include "MyGPIO.h" 	//TODO: REMOVE THIS
+// #include "PlatformSelection.h" 	//TODO: REMOVE THIS
+// extern PinData<Platform> ld6; 	//blue 	//TODO: REMOVE THIS
+// ld6.toggle();
 
 	// ld5.setValue(true);
 	for(;;) {
 		//sleep
-		float timeSlept = timingManager.sleep();
+		//float timeSlept = timingManager.sleep();
+		// timingManager.sleep();
+
+		//TODO: continue here: test written software with button press and LEDs
+		timingManager.waitTillNextTask();
+		
+		// if (button.getValue()) {
+		// 	ld4.high();
+		// } else {
+		// 	ld4.low();
+		// }
+	
+		//if anything to execute: execute
+		processManager.execute();
+
 		ld4.toggle();
 
-		// HAL_Delay(10000.f); 	//TODO: use timer
-
-		//update time sensitive tasks
-		// steppingTask.tick(timeSlept);
-
-		t3Machine.tick(timeSlept);
-		// processManager.execute();
+		// HAL_Delay(10000.f);
 	}
 }

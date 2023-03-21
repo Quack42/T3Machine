@@ -5,6 +5,7 @@
 
 //process control
 #include "Timing.h"
+#include "Timers.h"
 #include "TimingManager.h"
 #include "ProcessManager.h"
 
@@ -18,11 +19,15 @@
 // //HAL Handles
 // extern TIM_HandleTypeDef htim10;
 
+//platform
+extern ProcessManager<Platform> processManager;
+extern TimingManager<Platform> timingManager;//(htim10);
 
-extern PinData<Platform> ld3;//(LD3_GPIO_Port, LD3_Pin);
-extern PinData<Platform> ld4;//(LD4_GPIO_Port, LD4_Pin);
-extern PinData<Platform> ld5;//(LD5_GPIO_Port, LD5_Pin);
-extern PinData<Platform> ld6;//(LD6_GPIO_Port, LD6_Pin);
+
+extern PinData<Platform> ld3; 	//orange
+extern PinData<Platform> ld4; 	//green
+extern PinData<Platform> ld5; 	//red
+extern PinData<Platform> ld6; 	//blue
 
 extern PinData<Platform> stepPin_X;//(GPIOE, GPIO_PIN_0);
 extern PinData<Platform> stepPin_Y;//(GPIOE, GPIO_PIN_13);
@@ -31,9 +36,6 @@ extern PinData<Platform> directionPin_X;//(GPIOE, GPIO_PIN_6);
 extern PinData<Platform> directionPin_Y;//(GPIOE, GPIO_PIN_11);
 extern PinData<Platform> directionPin_Z;//(GPIOE, GPIO_PIN_9);
 
-//platform
-extern TimingManager<Platform> timingManager;//(htim10);
-extern ProcessManager<Platform> processManager;
 
 //interrupt pins
 extern ExternalInterruptPin<Platform> button;//(processManager, button_pinIdentifier, false);

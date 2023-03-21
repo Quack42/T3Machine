@@ -2,14 +2,6 @@
 
 #include "TimingManager.h"
 
-class TimeCountDown2 {
-public:
-	TimeCountDown(TimingManager<Platform> & timingManager) :
-		timingManager(timingManager)
-	{
-	}
-};
-
 class TimeCountDown {
 private:
 	float timeCountDown;

@@ -10,53 +10,50 @@
 
 #include "PinIdentifier.h"
 
+
+class ExternalInterruptPinSubscription {
+private:
+	bool pinValue;
+	std::function<void(bool)> subscribedFunction;
+};
+
 template<typename Platform>
 class ExternalInterruptPin {
 private:
 	ProcessManager<Platform> & processManager;
 	PinIdentifier<Platform> & pinIdentifier;
-	bool flaggedInterrupt = false;
-	bool activeLow = false;
 
-	SubscriptionNode * firstSubscription;
+	bool interruptValue = false;
+
 	ProcessRequest advertiseProcess;
 
+	std::function<void(bool)> subscriberFunction;
+
 public:
-	ExternalInterruptPin(ProcessManager<Platform> & processManager, PinIdentifier<Platform> & pinIdentifier, const bool & activeLow) :
+	ExternalInterruptPin(ProcessManager<Platform> & processManager, PinIdentifier<Platform> & pinIdentifier) :
 			processManager(processManager),
 			pinIdentifier(pinIdentifier),
-			activeLow(activeLow),
 			advertiseProcess(std::bind(&ExternalInterruptPin::advertise, this))
 	{
 
 	}
 
-	void registerSubscription(SubscriptionNode & subscription) {
-		if (firstSubscription == nullptr) {
-			firstSubscription = &subscription;
-		} else {
-			SubscriptionNode * current = firstSubscription;
-			while (current->next != nullptr) {
-				current = current->next;
-			}
-			current->next = &subscription;
-		}
+	void init() {
+		_init();
+		interruptValue = _getValue();
 	}
-	//TODO: void removeSubscription(SubscriptionNode * subscription) ..
 
-	void init();
-	bool getValue();
+	bool getValue() {
+		return interruptValue;
+	}
 
-	void flagInterrupt() {
-		flaggedInterrupt = true;
+	void setSubscriberFunction(std::function<void(bool)> subscriberFunction) {
+		this->subscriberFunction = subscriberFunction;
+	}
+
+	void isr() {
+		interruptValue = _getValue();
 		processManager.requestProcess(advertiseProcess);
-	}
-
-	bool isInterruptFlagged() {
-		bool ret = flaggedInterrupt;
-		//TODO: if an interrupt occurs here it can be missed. (flaggedInterrupt has already been read; <interrupt> flaggedInterrupt is set to true in flagInterrupt(); </interrupt> flaggedInterrupt is set back to false)
-		flaggedInterrupt = false;
-		return ret;
 	}
 
 	PinIdentifier<Platform> & getPinIdentifier() {
@@ -65,11 +62,14 @@ public:
 
 private:
 	void advertise() {
-		SubscriptionNode * current = firstSubscription;
-		while (current != nullptr) {
-			processManager.requestProcess(current->getProcessRequest());
+		if (subscriberFunction) {
+			subscriberFunction(interruptValue);
+			// subscriberFunction(getValue()); 	//TODO: think about if this is the same as intValue; and if we can remove intValue
 		}
 	}
+
+	void _init();
+	bool _getValue();
 };
 
 #ifdef MOCK

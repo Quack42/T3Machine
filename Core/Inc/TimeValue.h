@@ -72,6 +72,15 @@ public:
 		return ret;
 	}
 
+	TimeValue operator+(const TimeValue & rhs) const {
+		uint32_t result_us = us + rhs.us;
+		uint32_t result_ms = ms + rhs.ms + result_us/US_IN_A_MS;
+		result_us %= US_IN_A_MS;
+		uint32_t result_days = days + rhs.days + result_ms/MS_IN_A_DAY;
+		result_ms %= MS_IN_A_DAY;
+		return TimeValue(result_days, result_ms, result_us);
+	}
+
 	TimeValue & operator=(const TimeValue & rhs) {
 		this->us = rhs.us;
 		this->ms = rhs.ms;
@@ -83,4 +92,19 @@ public:
 		*this = (*this - rhs);
 		return *this;
 	}
+
+	friend
+	TimeValue operator*(const uint32_t & lhs, const TimeValue & rhs);
 };
+
+inline TimeValue operator*(const uint32_t & lhs, const TimeValue & rhs) {
+	uint32_t us = (lhs * rhs.us) % US_IN_A_MS;
+	uint32_t ms =
+			((static_cast<uint64_t>(lhs) * rhs.ms) +
+			(static_cast<uint64_t>(lhs) * rhs.us) / US_IN_A_MS) 	//us carry part
+			% MS_IN_A_DAY;
+	uint32_t days =
+		(lhs * rhs.days) +
+		(((static_cast<uint64_t>(lhs) * rhs.ms) + (static_cast<uint64_t>(lhs) * rhs.us) / US_IN_A_MS) / MS_IN_A_DAY); 	//ms carry part
+	return TimeValue(days, ms, us);
+}

@@ -23,6 +23,15 @@
 #define TIMER_TICKS_DURING_RUNNING (100000)
 #define SECONDS_PER_TIMER_ITERATION_DURING_RUNNING_MODE (TIMER_TICKS_DURING_RUNNING / TICKS_PER_SECOND) 	//make sure this division doesn't end up in a fraction
 
+uint32_t ticksToUS(uint32_t ticks){
+	uint32_t us = ticks*(US_IN_A_S / TICKS_PER_SECOND);
+	return us;
+}
+
+TimeValue ticksToTimeValue(uint32_t ticks) {
+	uint32_t us = ticksToUS(ticks);
+	return TimeValue(0, us/US_IN_A_MS, us%US_IN_A_MS);
+}
 
 //declare specialization BEFORE use
 template<>
@@ -41,13 +50,17 @@ void TimingManager<Stm32F407Platform>::init() {
 	timerHandle.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
 	timerHandle.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
 	__HAL_TIM_URS_ENABLE(&timerHandle); 	//don't trigger interrupt by reinitializing CNT value
+	timerCycleTime = ticksToTimeValue(TIMER_TICKS_DURING_RUNNING);
 	HAL_TIM_Base_Init(&timerHandle);
 }
 
 
 template<>
 void TimingManager<Stm32F407Platform>::start() {
+	TIM_HandleTypeDef & timerHandle = timerData.getTimerHandle();
+	timerHandle.Init.Period = TIMER_TICKS_DURING_RUNNING-1;
 	HAL_TIM_Base_Init(&timerData.getTimerHandle());
+	timerCycleTime = ticksToTimeValue(TIMER_TICKS_DURING_RUNNING);
 	HAL_TIM_Base_Start_IT(&timerData.getTimerHandle());
 }
 
@@ -94,20 +107,17 @@ void TimingManager<Stm32F407Platform>::waitTillNextTask() {
 	///Start sleep-time for earliest task
 	//Set sleep time
 	TIM_HandleTypeDef & timerHandle = timerData.getTimerHandle();
-	//TODO: timeToWait to timer ticks; if fitting.
 	// timerHandle.Init.Period max value is 0xFFFF
 	if (timeToWait > MaximumWaitTime) {
-		// timerHandle.Init.Period = 50000;
 		uint32_t ticksToWait = MaximumWaitTime.us/US_PER_TICK + MaximumWaitTime.ms*TICKS_PER_MS;
-		timerHandle.Init.Period = ticksToWait;
+		timerHandle.Init.Period = ticksToWait-1;
 	} else {
 		uint32_t ticksToWait = timeToWait.us/US_PER_TICK + timeToWait.ms*TICKS_PER_MS;
-		timerHandle.Init.Period = ticksToWait;
+		timerHandle.Init.Period = ticksToWait-1; 	//-1 because it counts 0 as a tick? Some example explained it, I understood it, forgot it, and now I just know it should be done.
 	}
-	// timerHandle.Init.Period = 50000-1; 	//TODO: fill in task-time here
+	//Start timer
 	HAL_TIM_Base_Init(&timerHandle); 	//NOTE: timerHandle reference is the exactly same as timerData.getTimerHandle(); this is just for readability
-	//Ready 'timerDone' flag and sleep
-	// timerDone = false;
+	timerCycleTime = timeToWait;
 	HAL_TIM_Base_Start_IT(&timerData.getTimerHandle());
 	//Sleep
 	processManager.sleep();
@@ -128,6 +138,7 @@ void TimingManager<Stm32F407Platform>::waitTillNextTask() {
 	//Start timer to track how much time we spent in 'running' mode.
 	timerHandle.Init.Period = TIMER_TICKS_DURING_RUNNING-1;
 	HAL_TIM_Base_Init(&timerHandle); 	//NOTE: timerHandle reference is the exactly same as timerData.getTimerHandle(); this is just for readability
+	timerCycleTime = ticksToTimeValue(TIMER_TICKS_DURING_RUNNING);
 	HAL_TIM_Base_Start_IT(&timerData.getTimerHandle());
 
 
@@ -148,24 +159,28 @@ void TimingManager<Stm32F407Platform>::timerISR() {
 
 template<>
 TimeValue TimingManager<Stm32F407Platform>::_getTimeSinceStart() {
+	//Assumes timer interrupt is disabled
+
 	//get timer counter
 	uint32_t counterValue = __HAL_TIM_GET_COUNTER(&timerData.getTimerHandle());
 	//convert timer counter value to time units
-	uint32_t usSinceCounterStart = counterValue*(US_IN_A_S / TICKS_PER_SECOND); 	//Note that this only counts what's in the timer CNT register
+	uint32_t usSinceCounterStart = ticksToUS(counterValue); 	//Note that this only counts what's in the timer CNT register
 
 	//get timer iteration counter
-	uint32_t secondsSinceCounterStart = timerInterruptCount * SECONDS_PER_TIMER_ITERATION_DURING_RUNNING_MODE; 	//Note that this counts how often the timer has looped its CNT value
+	TimeValue timerCyclesInTime = timerInterruptCount * timerCycleTime; 	//Note that this counts how often the timer has looped its CNT value 	//TODO: This is wrong; while waiting for a timed-event it will hardly ever take SECONDS_PER_TIMER_ITERATION_DURING_RUNNING_MODE seconds to loop the timer
+	// uint32_t secondsSinceCounterStart = timerInterruptCount * SECONDS_PER_TIMER_ITERATION_DURING_RUNNING_MODE; 	//Note that this counts how often the timer has looped its CNT value 	//TODO: This is wrong; while waiting for a timed-event it will hardly ever take SECONDS_PER_TIMER_ITERATION_DURING_RUNNING_MODE seconds to loop the timer
 	//Also note that SECONDS_PER_TIMER_ITERATION is a nice round number; there's only the ms to worry about here.
 
 	//add time that timer has run to time-since-start-till-timer-start (i.e. count the time since start of the MCU till 'now')
 	uint32_t usSinceTimeStart = timeSinceStart.us + usSinceCounterStart;
-	uint32_t msSinceTimeStart = timeSinceStart.ms + usSinceTimeStart/US_IN_A_MS + secondsSinceCounterStart * MS_IN_A_S;
+	uint32_t msSinceTimeStart = timeSinceStart.ms + usSinceTimeStart/US_IN_A_MS;
+	// uint32_t msSinceTimeStart = timeSinceStart.ms + usSinceTimeStart/US_IN_A_MS + secondsSinceCounterStart * MS_IN_A_S;
 	usSinceTimeStart %= US_IN_A_MS;
 	uint32_t daysSinceTimeStart = timeSinceStart.days + msSinceTimeStart/MS_IN_A_DAY;
 	msSinceTimeStart %= MS_IN_A_DAY;
 
 	//create return value
-	return TimeValue(daysSinceTimeStart, msSinceTimeStart, usSinceTimeStart);
+	return TimeValue(daysSinceTimeStart, msSinceTimeStart, usSinceTimeStart) + timerCyclesInTime;
 }
 
 template<>

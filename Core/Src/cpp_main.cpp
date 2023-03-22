@@ -19,7 +19,7 @@
 // extern OutputPin<Platform> ld6; 	//blue 	//TODO: REMOVE THIS
 // ld6.toggle(); 	//TODO: REMOVE THIS
 
-TimingTest0<Platform> timingTest0(processManager, timingManager, ld3);
+TimingTest0<Platform> timingTest0(processManager, timingManager, ld3, ld6);
 
 void cpp_main(void) {
 	//init platform

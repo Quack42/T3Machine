@@ -17,6 +17,7 @@ private:
 	TimerData<Platform> & timerData;
 
 	uint32_t timerInterruptCount = 0;
+	TimeValue timerCycleTime;
 	TimeValue timeSinceStart;
 
 	TimedTask * firstTask = nullptr;

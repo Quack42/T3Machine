@@ -4,6 +4,9 @@
  *  Created on: Feb 20, 2023
  *  Author: quack
  */
+
+//TODO: Refactor file to ExternalInterruptPin.h; or just InterruptPin.h
+
 #pragma once
 
 #include "ProcessManager.h"

@@ -1,5 +1,7 @@
 #pragma once
 
+//TODO: Refactor file to OutputPin.h
+
 #include "PinIdentifier.h"
 
 template<typename Platform>

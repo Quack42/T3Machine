@@ -10,8 +10,9 @@
 
 // #include "ProcessManager.h"
 #include "MyExternalInterruptPin.h"
-#include "Stm32PinIdentifier.h"
 #include "Stm32F407Platform.h"
+
+#include "Stm32PinIdentifier.h"
 
 #include "stm32f4xx_hal.h"
 
@@ -27,7 +28,7 @@ void ExternalInterruptPin<Stm32F407Platform>::_init() {
 	GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING; 	//TODO: make this configurable
 	GPIO_InitStruct.Pull = GPIO_NOPULL;
 	HAL_GPIO_Init(pinIdentifier.getPort(), &GPIO_InitStruct);
-	//HAL_NVIC_SetPriority(EXTI0_IRQn, 0, 0);
+	//HAL_NVIC_SetPriority(EXTI0_IRQn, 0, 0); 	//TODO: look into priorities, maybe make them settable or something
 
 	switch(pinIdentifier.getPin()) {
 		case GPIO_PIN_0:

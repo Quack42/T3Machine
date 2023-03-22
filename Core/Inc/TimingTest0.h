@@ -9,7 +9,7 @@ class TimingTest0 {
 private:
 	ProcessManager<Platform> & processManager;
 	TimingManager<Platform> & timingManager;
-	PinData<Platform> & ld;
+	OutputPin<Platform> & ld;
 	TimedTask lightShowTimedCallbackTask;
 	enum LightShowState_e {
 		e_0,
@@ -21,7 +21,7 @@ private:
 	} lightShowState;
 
 public:
-	TimingTest0(ProcessManager<Platform> & processManager, TimingManager<Platform> & timingManager, PinData<Platform> & ld) :
+	TimingTest0(ProcessManager<Platform> & processManager, TimingManager<Platform> & timingManager, OutputPin<Platform> & ld) :
 			processManager(processManager),
 			timingManager(timingManager),
 			ld(ld),

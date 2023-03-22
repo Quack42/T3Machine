@@ -8,17 +8,17 @@ TimingManager<Platform> timingManager(processManager, timingManagerTimer);
 
 
 //output pins
-PinData<Platform> ld3(ld3_pinIdentifier);
-PinData<Platform> ld4(ld4_pinIdentifier);
-PinData<Platform> ld5(ld5_pinIdentifier);
-PinData<Platform> ld6(ld6_pinIdentifier);
+OutputPin<Platform> ld3(ld3_pinIdentifier);
+OutputPin<Platform> ld4(ld4_pinIdentifier);
+OutputPin<Platform> ld5(ld5_pinIdentifier);
+OutputPin<Platform> ld6(ld6_pinIdentifier);
 
-PinData<Platform> stepPin_X(stepPin_X_pinIdentifier);
-PinData<Platform> stepPin_Y(stepPin_Y_pinIdentifier);
-PinData<Platform> stepPin_Z(stepPin_Z_pinIdentifier);
-PinData<Platform> directionPin_X(directionPin_X_pinIdentifier);
-PinData<Platform> directionPin_Y(directionPin_Y_pinIdentifier);
-PinData<Platform> directionPin_Z(directionPin_Z_pinIdentifier);
+OutputPin<Platform> stepPin_X(stepPin_X_pinIdentifier);
+OutputPin<Platform> stepPin_Y(stepPin_Y_pinIdentifier);
+OutputPin<Platform> stepPin_Z(stepPin_Z_pinIdentifier);
+OutputPin<Platform> directionPin_X(directionPin_X_pinIdentifier);
+OutputPin<Platform> directionPin_Y(directionPin_Y_pinIdentifier);
+OutputPin<Platform> directionPin_Z(directionPin_Z_pinIdentifier);
 
 //interrupt pins
 ExternalInterruptPin<Platform> button(processManager, button_pinIdentifier);
@@ -28,8 +28,6 @@ ExternalInterruptPin<Platform> sensor_Z(processManager, sensor_Z_pinIdentifier);
 
 //filter
 FuzzyFilter<ExternalInterruptPin<Platform>, Platform> sensor_X_filter(timingManager, sensor_X);
-
-SubscriptionNode sensor_X_filter_sub([](){sensor_X_filter.inputUpdate();});
 
 //devices
 M415C<Platform> m415c_X(stepPin_X, directionPin_X);

@@ -1,19 +1,18 @@
 #pragma once
 
-//#include "IOPin.h"
-#include "PinControl.h"
+#include "MyGPIO.h"
 
 //NOTE: The current limiter is done by hand. See: https://lastminuteengineers.com/drv8825-stepper-motor-driver-arduino-tutorial/
 
 template<typename Platform>
 class DRV8825_MovementControl {
 private:
-	PinData<Platform> & stepPin;
-	PinData<Platform> & directionPin;
+	OutputPin<Platform> & stepPin;
+	OutputPin<Platform> & directionPin;
 
 public:
-	DRV8825_MovementControl(PinData<Platform> & stepPin,
-			PinData<Platform> & directionPin) :
+	DRV8825_MovementControl(OutputPin<Platform> & stepPin,
+			OutputPin<Platform> & directionPin) :
 		stepPin(stepPin),
 		directionPin(directionPin)
 	{
@@ -40,23 +39,23 @@ class DRV8825 {
 private:
 	DRV8825_MovementControl<Platform> movementControl;
 	PinControlOut<ActiveLow> pc_enable;
-	PinData<Platform> & pin_microstep0;
-	PinData<Platform> & pin_microstep1;
-	PinData<Platform> & pin_microstep2;
+	OutputPin<Platform> & pin_microstep0;
+	OutputPin<Platform> & pin_microstep1;
+	OutputPin<Platform> & pin_microstep2;
 	PinControlOut<ActiveLow> pc_reset;
 	PinControlOut<ActiveLow> pc_sleep;
-	// PinData<Platform> & pin_step;
-	// PinData<Platform> & pin_dir;
+	// OutputPin<Platform> & pin_step;
+	// OutputPin<Platform> & pin_dir;
 	// PinControlIn<ActiveLow> pc_fault;
 public:
-	DRV8825_FULL(PinData<Platform> & pin_enable,
-			PinData<Platform> & pin_microstep0,
-			PinData<Platform> & pin_microstep1,
-			PinData<Platform> & pin_microstep2,
-			PinData<Platform> & pin_reset,
-			PinData<Platform> & pin_sleep,
-			PinData<Platform> & pin_step,
-			PinData<Platform> & pin_dir//,
+	DRV8825_FULL(OutputPin<Platform> & pin_enable,
+			OutputPin<Platform> & pin_microstep0,
+			OutputPin<Platform> & pin_microstep1,
+			OutputPin<Platform> & pin_microstep2,
+			OutputPin<Platform> & pin_reset,
+			OutputPin<Platform> & pin_sleep,
+			OutputPin<Platform> & pin_step,
+			OutputPin<Platform> & pin_dir//,
 			// IOPin & pin_fault
 	) : 
 			movementControl(pin_step, pin_dir),

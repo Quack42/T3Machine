@@ -5,55 +5,17 @@
 #include "TimeValue.h"
 #include "ConfigurableConstants.h"
 
-#include <cstdint>
 
+#include "TimedTask.h"
 
-class TimedTask {
-public:
-	TimedTask * next = nullptr; 	//linked list stuff.. Don't really care about access here
-private:
-	ProcessRequest processRequest;
-	TimeValue timeUntilTaskStart;
-public:
-	TimedTask(std::function<void(void)> func, TimeValue timeUntilTaskStart) :
-			processRequest(func),
-			timeUntilTaskStart(timeUntilTaskStart)
-	{
-
-	}
-
-	void setTimeUntilTaskStart(TimeValue timeUntilTaskStart) {
-		this->timeUntilTaskStart = timeUntilTaskStart;
-	}
-
-	void timeHasPassed(const TimeValue & timePassed) {
-		timeUntilTaskStart -= timePassed;
-	}
-
-	bool isReadyToExecute() const {
-		return (timeUntilTaskStart.us == 0) && (timeUntilTaskStart.ms == 0) && (timeUntilTaskStart.days == 0);
-	}
-
-	TimeValue getTimeUntilTaskStart() {
-		return timeUntilTaskStart;
-	}
-
-	ProcessRequest & getProcessRequest() {
-		return processRequest;
-	}
-
-};
 
 template<typename Platform>
 class TimingManager {
 private:
+	//references
 	ProcessManager<Platform> & processManager;
 	TimerData<Platform> & timerData;
-	// float pollWakeupTime = 1000.f; 	//Maximum consecutive period of sleep
-	// float timeUntilFirstWakeup = pollWakeupTime;
-	volatile bool sleeping = false;
 
-	// bool timerDone = false;
 	uint32_t timerInterruptCount = 0;
 	TimeValue timeSinceStart;
 
@@ -68,10 +30,6 @@ public:
 	{
 
 	}
-	// void setPollWakeupTime(float pollWakeupTime);
-
-	// void scheduleWakeup(float timeUntilWakeup);
-
 
 	void addTask(TimedTask * task) {
 		//Add task to to-add list
@@ -83,16 +41,6 @@ public:
 		processManager.awake();
 	}
 
-	void setPollWakeupTime(float pollWakeupTime) {
-		// this->pollWakeupTime = pollWakeupTime;
-	}
-
-	void scheduleWakeup(float timeUntilWakeup) {
-		// if (timeUntilWakeup < timeUntilFirstWakeup) {
-		// 	timeUntilFirstWakeup = timeUntilWakeup;
-		// }
-	}
-
 	void waitTillNextTask();
 
 	TimeValue getTimeSinceStart();
@@ -101,10 +49,6 @@ public:
 
 	void timerISR();
 	void start();
-	// void _speedUp(); 	//TODO: REMOVE THIS
-
-	//returns the time slept in ms
-	// float sleep();
 
 private:
 	void updateTimeSinceStart();
@@ -151,10 +95,3 @@ private:
 	}
 
 };
-
-#ifdef MOCK
-	#include "MockTimingManager.h"
-#endif //defined(MOCK)
-//#ifdef STM
-	// #include "Stm32TimingManager.h"
-//#endif //defined(STM)

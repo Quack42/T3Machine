@@ -105,36 +105,18 @@ int main(void)
   MX_USB_HOST_Init();
   MX_TIM10_Init();
   /* USER CODE BEGIN 2 */
-
-  HAL_TIM_Base_Start_IT(&htim10);
-  // Get current time (microseconds)
-  //uint16_t timer_val = __HAL_TIM_GET_COUNTER(&htim10);
-  HAL_GPIO_WritePin(LD6_GPIO_Port, LD6_Pin, GPIO_PIN_SET);
-  //while(1) {}
-  /*{
-    // If enough time has passed (1 second), toggle LED and get new timestamp
-	  if(__HAL_TIM_GET_COUNTER(&htim10) >= 10000) {
-			HAL_GPIO_TogglePin(LD6_GPIO_Port, LD6_Pin);
-			__HAL_TIM_SET_COUNTER(&htim10, 0);
-	  }
-  }*/
+  //call CPP main
 	cpp_main();
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-//	while (1)
-//	{
-    /* USER CODE END WHILE */
-    MX_USB_HOST_Process();
+  //TODO: do something with MX_USB_HOST_Process()-call below
+  /* USER CODE END WHILE */
+  MX_USB_HOST_Process();
 
-    /* USER CODE BEGIN 3 */
-//		//sleep
-//		float timeSlept = timingManager.sleep();
-//
-//		//update time sensitive tasks
-//		steppingTask.tick(timeSlept);
-//	}
+  /* USER CODE BEGIN 3 */
   /* USER CODE END 3 */
 }
 
@@ -417,31 +399,7 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-
-//  TIM2_IRQn (32-bit General Purpose timer)
-  //handle: TIM_TypeDef TIM2
-  //irq handler: TIM2_IRQHandler
-//init call: HAL_TIM_Base_Init
-
-
-
-
-
-//de-init call: HAL_TIM_Base_DeInit
-
-
-//void EXTI0_IRQHandler(){
-	//forward to HAL
-
-/*	htim10.Init.Period = 5000-1;
-	HAL_TIM_Base_Stop_IT(&htim10);
-	HAL_TIM_Base_Init(&htim10);
-	HAL_TIM_Base_Start_IT(&htim10);*/
-
-//	HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_0);
-
-//}
-
+//TODO: maybe make below 'weak' calls, or just remove them entirely and let them be generated in stm32f4xx_it.c
 void EXTI1_IRQHandler(){
 	//forward to HAL
 	HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_1);
@@ -511,10 +469,6 @@ void HAL_GPIO_EXTI_Callback(uint16_t pin)
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef * htim) {
 	//forward to cpp_main
 	CPP_HAL_TIM_PeriodElapsedCallback(htim);
-  // Check which version of the timer triggered this callback and toggle LED
-//	if(htim == &htim10) {
-//		HAL_GPIO_TogglePin(LD6_GPIO_Port, LD6_Pin);
-//	}
 }
 
 //TODO: move Error_Handler to main.c or something? Basically just separate main.cpp and main.c

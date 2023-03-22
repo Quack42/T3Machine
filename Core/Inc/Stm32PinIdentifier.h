@@ -1,8 +1,9 @@
 #pragma once
 
 #include "PinIdentifier.h"
-#include "stm32f4xx_hal.h"
 #include "Stm32F407Platform.h"
+
+#include "stm32f4xx_hal.h"
 
 template<>
 class PinIdentifier<Stm32F407Platform> {

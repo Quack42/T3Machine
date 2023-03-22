@@ -1,6 +1,5 @@
 #pragma once
 
 class Stm32F407Platform {
-public:
+	//Nothing to do here really.
 };
-

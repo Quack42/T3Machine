@@ -87,7 +87,9 @@ public:
 				//fuzzyBoolean value going towards 'lowBound'
 				switchTime.setTimeCountDown(fuzzyBoolean-lowBound); 	//by above computation, 'fuzzyBoolean' should always be bigger than 'lowBound' at this point.
 			}
-			timingManager.scheduleWakeup(switchTime.getRemainingTime());
+			//Schedule wake up:
+			//TODO: schedule wakeup; adjust to new TimerManager setup
+			// timingManager.scheduleWakeup(switchTime.getRemainingTime());
 		}
 		lastValue = newValue;
 

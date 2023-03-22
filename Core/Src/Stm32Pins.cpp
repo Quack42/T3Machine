@@ -1,16 +1,11 @@
-//#include "Pins.h"
-
+#include "Stm32PinIdentifier.h"
 #include "Stm32F407Platform.h"
-
-#include "stm32f4xx_hal.h"
 
 #include "main.h" 	//for STM32CubeIDE generated pin names
 
-#include "Stm32PinIdentifier.h"
+#include "stm32f4xx_hal.h"
 
 //#ifdef STM32
-
-
 
 PinIdentifier<Stm32F407Platform> ld3_pinIdentifier(LD3_GPIO_Port, LD3_Pin);
 PinIdentifier<Stm32F407Platform> ld4_pinIdentifier(LD4_GPIO_Port, LD4_Pin);

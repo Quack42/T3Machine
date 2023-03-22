@@ -71,7 +71,3 @@ private:
 	void _init();
 	bool _getValue();
 };
-
-#ifdef MOCK
-	#include "MockExternalInterruptPin.h"
-#endif //defined(MOCK)

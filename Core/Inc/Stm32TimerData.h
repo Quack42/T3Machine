@@ -1,8 +1,9 @@
 #pragma once
 
 #include "TimerData.h"
-#include "stm32f4xx_hal.h"
 #include "Stm32F407Platform.h"
+
+#include "stm32f4xx_hal.h"
 
 template<>
 class TimerData<Stm32F407Platform> {

@@ -1,38 +1,6 @@
 #pragma once
 
-#include <functional>
-
-class ProcessRequest {
-public:
-	ProcessRequest * next = nullptr; 	//member variable as public.. ugh.. //TODO: fixme
-private:
-	std::function<void(void)> processFunction;
-public:
-	ProcessRequest(std::function<void(void)> processFunction) :
-			processFunction(processFunction)
-	{
-
-	}
-
-	void execute() {
-		processFunction();
-	}
-};
-
-class SubscriptionNode {
-private:
-	SubscriptionNode * next = nullptr;
-	ProcessRequest processRequest;
-public:
-	SubscriptionNode(std::function<void(void)> processFunction) :
-		processRequest(processFunction)
-	{
-	}
-
-	ProcessRequest & getProcessRequest() {
-		return processRequest;
-	}
-};
+#include "ProcessRequest.h"
 
 template<typename Platform>
 class ProcessManager {
@@ -82,7 +50,6 @@ public:
 	}
 	void awake() {
 		//NOTE: Please make a platform specific low-power-mode replacement for your used platform
-		// sleeping = false;
 		wakeup = true;
 	}
 

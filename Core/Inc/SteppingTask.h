@@ -2,6 +2,8 @@
 
 #include "Timing.h"
 
+//TODO: adjust SteppingTask to new TimingManager
+
 template<typename Driver, typename Platform>
 class SteppingTask {
 private:

@@ -6,10 +6,10 @@
 template<typename Platform>
 class M415C {
 private:
-	PinData<Platform> & stepPin;
-	PinData<Platform> & directionPin;
+	OutputPin<Platform> & stepPin;
+	OutputPin<Platform> & directionPin;
 public:
-	M415C(PinData<Platform> & stepPin, PinData<Platform> & directionPin) :
+	M415C(OutputPin<Platform> & stepPin, OutputPin<Platform> & directionPin) :
 			stepPin(stepPin),
 			directionPin(directionPin)
 	{
@@ -17,8 +17,7 @@ public:
 	}
 
 	void init() {
-		// stepPin.setValue(true);
-		// directionPin.setValue(true);
+		
 	}
 
 	void setStepPin(const bool & pinValue) {

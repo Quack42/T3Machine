@@ -5,8 +5,7 @@
  *      Author: quack
  */
 
-#ifndef INC_CPP_MAIN_H_
-#define INC_CPP_MAIN_H_
+#pragma once
 
 #include "stm32f4xx_hal.h"
 #include "stm32f4xx_hal_tim.h"
@@ -29,5 +28,3 @@ EXTERNC void cpp_main(void);
 EXTERNC void CPP_HAL_GPIO_EXTI_Callback(uint16_t pin); 	//TODO: move this elsewhere; keep cpp_main platform agnostic
 EXTERNC void CPP_HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef * htim); 	 	//TODO: move this elsewhere; keep cpp_main platform agnostic
 #undef EXTERNC
-
-#endif /* INC_CPP_MAIN_H_ */

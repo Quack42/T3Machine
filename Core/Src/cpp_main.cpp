@@ -29,6 +29,7 @@
 // #include "HomingTask.h"
 
 #include "Devices.h"
+#include "TimingTest0.h"
 
 // //HAL Handles
 // extern TIM_HandleTypeDef htim10;
@@ -83,25 +84,12 @@
 // 		sensor_Z
 // 	);
 
+// #include "MyGPIO.h" 	//TODO: REMOVE THIS
+// #include "PlatformSelection.h" 	//TODO: REMOVE THIS
+// extern PinData<Platform> ld6; 	//blue 	//TODO: REMOVE THIS
+// ld6.toggle(); 	//TODO: REMOVE THIS
 
-template<typename Platform>
-class LedController {
-private:
-	PinData<Platform> & ld;
-public:
-	LedController(PinData<Platform> & ld) : ld(ld) {}
-
-	void input(bool inputValue) {
-		if (inputValue) {
-			//button is pressed
-			ld.high();
-		} else {
-			//button is released
-			ld.low();
-		}
-	}
-};
-LedController<Platform> ledController(ld3);
+TimingTest0<Platform> timingTest0(processManager, timingManager, ld3);
 
 void cpp_main(void) {
 	//init platform
@@ -131,15 +119,11 @@ void cpp_main(void) {
 	////////////////////////
 	// Setup connection
 
-	button.setSubscriberFunction([](bool pinValue){ledController.input(pinValue);});
+	button.setSubscriberFunction([](bool pinValue){timingTest0.input(pinValue);});
 
 	////////////////////////
 	timingManager.start(); 	//'startRunning'
 
-// #include "MyGPIO.h" 	//TODO: REMOVE THIS
-// #include "PlatformSelection.h" 	//TODO: REMOVE THIS
-// extern PinData<Platform> ld6; 	//blue 	//TODO: REMOVE THIS
-// ld6.toggle();
 
 	// ld5.setValue(true);
 	for(;;) {

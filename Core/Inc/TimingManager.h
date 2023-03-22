@@ -55,7 +55,7 @@ private:
 
 	// bool timerDone = false;
 	uint32_t timerInterruptCount = 0;
-	TimeValue timeSinceStart = {}; //NOTE: This isn't always accurate; it needs the timer value.
+	TimeValue timeSinceStart;
 
 	TimedTask * firstTask = nullptr;
 	TimedTask * firstTask_toAddList = nullptr;
@@ -63,7 +63,8 @@ private:
 public:
 	TimingManager(ProcessManager<Platform> & processManager, TimerData<Platform> & timerData) :
 			processManager(processManager),
-			timerData(timerData)
+			timerData(timerData),
+			timeSinceStart(0,0,0)
 	{
 
 	}
@@ -100,7 +101,7 @@ public:
 
 	void timerISR();
 	void start();
-	void _speedUp(); 	//TODO: REMOVE THIS
+	// void _speedUp(); 	//TODO: REMOVE THIS
 
 	//returns the time slept in ms
 	// float sleep();

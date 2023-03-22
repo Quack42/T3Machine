@@ -3,7 +3,7 @@
 #include "PinIdentifier.h"
 
 template<typename Platform>
-class PinData {
+class PinData { 	//TODO: refactor to OutputPin
 private:
 	PinIdentifier<Platform> & pinIdentifier;
 public:

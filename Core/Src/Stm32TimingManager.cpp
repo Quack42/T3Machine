@@ -90,7 +90,8 @@ void TimingManager<Stm32F407Platform>::waitTillNextTask() {
 	//Stop timer
 	HAL_TIM_Base_Stop_IT(&timerData.getTimerHandle());
 	//Add time passed to tracked time for all tasks
-	TimeValue timeDifference = getTimeSinceStart() - timeSinceStart;
+	TimeValue timeDifference;
+	timeDifference = getTimeSinceStart() - timeSinceStart;
 	updateTaskListWithTimePassage(timeDifference);
 	///Add to recorded time and reset;
 	updateTimeSinceStart();
@@ -148,10 +149,10 @@ void TimingManager<Stm32F407Platform>::waitTillNextTask() {
 	//Check if any task is ready to start
 	// if (timerDone) {
 		//add task function to process.requestProcess list
-		while (firstTask != nullptr && firstTask->isReadyToExecute()){
-			processManager.requestProcess(firstTask->getProcessRequest());
-			firstTask = firstTask->next;
-		}
+	while (firstTask != nullptr && firstTask->isReadyToExecute()){
+		processManager.requestProcess(firstTask->getProcessRequest());
+		firstTask = firstTask->next;
+	}
 	// }
 }
 
@@ -190,38 +191,18 @@ void TimingManager<Stm32F407Platform>::waitTillNextTask() {
 // 	processManager.enableInterrupts();
 // }
 
-template<>
-void TimingManager<Stm32F407Platform>::_speedUp() { 	//TODO: REMOVE THIS
-	TIM_HandleTypeDef & timerHandle = timerData.getTimerHandle();
-	timerHandle.Init.Period = 50000-1;
+// template<>
+// void TimingManager<Stm32F407Platform>::_speedUp() { 	//TODO: REMOVE THIS
+// 	TIM_HandleTypeDef & timerHandle = timerData.getTimerHandle();
+// 	timerHandle.Init.Period = 50000-1;
 
-	HAL_TIM_Base_Init(&timerData.getTimerHandle());
-}
+// 	HAL_TIM_Base_Init(&timerData.getTimerHandle());
+// }
 
 template<>
 void TimingManager<Stm32F407Platform>::timerISR() {
-	// sleeping = false;
-	// timerDone = true;
 	timerInterruptCount++;
 	processManager.awake();
-
-	// /// Update 'timeSinceStart' value
-	// //get timer counter
-	// uint32_t counterValue = __HAL_TIM_GET_AUTORELOAD(&timerData.getTimerHandle()); 	//counter value the timer just counted up to
-	// //convert timer counter value to time units
-	// uint32_t usSinceCounterStart = counterValue*(US_IN_A_S / TICKS_PER_SECOND);
-
-	// //Compute new timeSinceStart
-	// TimeValue newTimeSinceStart = timeSinceStart;
-	// uint32_t _newTimeSinceStart_us = usSinceCounterStart + newTimeSinceStart.us; 	//doing this in separate uint32_t because (new)timeSinceStart.us is uint16_t and overflows easily
-	// newTimeSinceStart.ms += _newTimeSinceStart_us / US_IN_A_MS;
-	// _newTimeSinceStart_us %= US_IN_A_MS;
-	// newTimeSinceStart.us = _newTimeSinceStart_us;
-	// newTimeSinceStart.days += (newTimeSinceStart.ms / MS_IN_A_DAY);
-	// newTimeSinceStart.ms %= MS_IN_A_DAY;
-
-	// //store new 'timeSinceStart'
-	// timeSinceStart = newTimeSinceStart;
 }
 
 template<>
@@ -232,11 +213,9 @@ TimeValue TimingManager<Stm32F407Platform>::_getTimeSinceStart() {
 	uint32_t usSinceCounterStart = counterValue*(US_IN_A_S / TICKS_PER_SECOND); 	//Note that this only counts what's in the timer CNT register
 
 	//get timer iteration counter
-
 	uint32_t secondsSinceCounterStart = timerInterruptCount * SECONDS_PER_TIMER_ITERATION_DURING_RUNNING_MODE; 	//Note that this counts how often the timer has looped its CNT value
 	//Also note that SECONDS_PER_TIMER_ITERATION is a nice round number; there's only the ms to worry about here.
 
-	//TODO: using 'timeSinceStart' here isn't safe. It gets altered in an ISR
 	//add time that timer has run to time-since-start-till-timer-start (i.e. count the time since start of the MCU till 'now')
 	uint32_t usSinceTimeStart = timeSinceStart.us + usSinceCounterStart;
 	uint32_t msSinceTimeStart = timeSinceStart.ms + usSinceTimeStart/US_IN_A_MS + secondsSinceCounterStart * MS_IN_A_S;
@@ -245,12 +224,7 @@ TimeValue TimingManager<Stm32F407Platform>::_getTimeSinceStart() {
 	msSinceTimeStart %= MS_IN_A_DAY;
 
 	//create return value
-	TimeValue ret;
-	ret.us = usSinceTimeStart;
-	ret.us = msSinceTimeStart;
-	ret.us = daysSinceTimeStart;
-
-	return ret;
+	return TimeValue(daysSinceTimeStart, msSinceTimeStart, usSinceTimeStart);
 }
 
 template<>

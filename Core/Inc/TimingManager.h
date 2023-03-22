@@ -32,6 +32,10 @@ public:
 	}
 
 	void addTask(TimedTask * task) {
+		if (toAddListContainsTask(task)) {
+			//already in to-add list
+			return;
+		}
 		//Add task to to-add list
 		processManager.disableInterrupts(); 	//Disable interrupts: This function can also be called from interrupts.
 		task->next = firstTask_toAddList;
@@ -51,6 +55,22 @@ public:
 	void start();
 
 private:
+	bool toAddListContainsTask(TimedTask * task) {
+		TimedTask * currentToAdd = firstTask_toAddList;
+		while ((currentToAdd != nullptr) && (currentToAdd != task)) {
+			currentToAdd = currentToAdd->next;
+		}
+		return (currentToAdd == task);
+	}
+
+	bool taskListContainsTask(TimedTask * task) {
+		TimedTask * current = firstTask;
+		while ((current != nullptr) && (current != task)) {
+			current = current->next;
+		}
+		return (current == task);
+	}
+
 	void updateTimeSinceStart();
 
 	void addToAddTasksToTaskList() {
@@ -62,21 +82,24 @@ private:
 		while (taskToAdd != nullptr) {
 			//store which task will be added next; so we're free to adjust taskToAdd's values
 			TimedTask * nextTaskToAdd = taskToAdd->next;
+			if (!taskListContainsTask(taskToAdd)) {
+				//Task isn't already added
 
-			//Check if taskToAdd should be added in first position
-			if ((firstTask == nullptr) || (firstTask->getTimeUntilTaskStart() > taskToAdd->getTimeUntilTaskStart())) {
-				taskToAdd->next = firstTask;
-				firstTask = taskToAdd;
-			} else {
-				//check the rest of the list
-				TimedTask * current = firstTask;
-				while ((current->next != nullptr) && (taskToAdd->getTimeUntilTaskStart() > current->next->getTimeUntilTaskStart())) {
-					//while taskToAdd is later than current->next task, check the next one
-					current = current->next;
+				//Check if taskToAdd should be added in first position
+				if ((firstTask == nullptr) || (firstTask->getTimeUntilTaskStart() > taskToAdd->getTimeUntilTaskStart())) {
+					taskToAdd->next = firstTask;
+					firstTask = taskToAdd;
+				} else {
+					//check the rest of the list
+					TimedTask * current = firstTask;
+					while ((current->next != nullptr) && (taskToAdd->getTimeUntilTaskStart() > current->next->getTimeUntilTaskStart())) {
+						//while taskToAdd is later than current->next task, check the next one
+						current = current->next;
+					}
+					//taskToAdd is BEFORE current->next task (or current->next is nullptr); so add it before, but after current
+					taskToAdd->next = current->next;
+					current->next = taskToAdd;
 				}
-				//taskToAdd is BEFORE current->next task (or current->next is nullptr); so add it before, but after current
-				taskToAdd->next = current->next;
-				current->next = taskToAdd;
 			}
 
 			//check next

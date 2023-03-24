@@ -15,6 +15,7 @@
 #include "MyGPIO.h"
 #include "MyExternalInterruptPin.h"
 #include "T3Machine.h"
+#include "FuzzyFilter.h"
 
 //platform
 extern ProcessManager<Platform> processManager;
@@ -38,6 +39,11 @@ extern ExternalInterruptPin<Platform> button;
 extern ExternalInterruptPin<Platform> sensor_X;
 extern ExternalInterruptPin<Platform> sensor_Y;
 extern ExternalInterruptPin<Platform> sensor_Z;
+
+//filters
+extern FuzzyFilter<Platform> button_filter;
+extern FuzzyFilter<Platform> sensor_X_filter;
+
 
 //devices
 extern M415C<Platform> m415c_X;

@@ -42,6 +42,10 @@ void cpp_main(void) {
 	sensor_Z.init();
 
 	//init devices
+	button_filter.init(button.getValue());
+	// sensor_X_filter.init(sensor_X.getValue());
+
+	//init devices
 	m415c_X.init();
 	m415c_Y.init();
 	drv8825_Z.init();
@@ -49,7 +53,9 @@ void cpp_main(void) {
 	////////////////////////
 	// Setup connection
 
-	button.setSubscriberFunction([](bool pinValue){timingTest0.input(pinValue);});
+	button.setSubscriberFunction([](bool pinValue){button_filter.input(pinValue);});
+	// button.setSubscriberFunction([](bool pinValue){timingTest0.input(pinValue);});
+	button_filter.setSubscriberFunction([](bool pinValue){timingTest0.input(pinValue);});
 
 	////////////////////////
 	timingManager.start(); 	//'startRunning'
@@ -62,7 +68,7 @@ void cpp_main(void) {
 		//if anything to execute: execute
 		processManager.execute();
 
-		ld4.toggle();
+		// ld4.toggle();
 
 		// HAL_Delay(10000.f);
 	}

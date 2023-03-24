@@ -9,6 +9,7 @@ private:
 	std::function<void(void)> processFunction;
 public:
 	ProcessRequest(std::function<void(void)> processFunction) :
+			next(nullptr),
 			processFunction(processFunction)
 	{
 

@@ -15,6 +15,7 @@ private:
 	OutputPin<Platform> & ldBlue;
 	//Components
 	TimedTask lightShowTimedCallbackTask;
+	// TimedTask cancelLightShowTaskTask;
 	StopWatch<Platform> stopwatch;
 	//Variables
 	enum LightShowState_e {
@@ -38,6 +39,7 @@ public:
 			ldBlue(ldBlue),
 			//Components
 			lightShowTimedCallbackTask(std::bind(&TimingTest0::lightShowTimedCallback, this), TimeValue(0,1000,0)),
+			// cancelLightShowTaskTask(std::bind(&TimingTest0::cancelLightShowTaskCallback, this), TimeValue(0,11500,0)),
 			stopwatch(timingManager),
 			//Variables
 			lightShowState(e_0)
@@ -55,12 +57,18 @@ public:
 			ldOrange.low();
 			ldBlue.low();
 			//Start light show.
-			lightShowTimedCallbackTask.setTimeUntilTaskStart(TimeValue(0,1000,0));
-			timingManager.addTask(&lightShowTimedCallbackTask);
+			// lightShowTimedCallbackTask.setTimeUntilTaskStart(TimeValue(0,1000,0)); 	//TODO: uncomment
+			// timingManager.addTask(&lightShowTimedCallbackTask); 	//TODO: uncomment
+			// lightShowTimedCallbackTask.setTimeUntilTaskStart(TimeValue(0,11500,0)); 	//TODO: uncomment
+			// timingManager.addTask(&cancelLightShowTask); 	//TODO: uncomment
 		}
 	}
 
 private:
+	// void cancelLightShowTaskCallback () {
+		// timingManager.removeTask(&lightShowTimedCallbackTask);
+	// }
+
 	void lightShowTimedCallback() {
 		//state action
 		switch(lightShowState) {

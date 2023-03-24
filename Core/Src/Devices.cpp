@@ -26,8 +26,9 @@ ExternalInterruptPin<Platform> sensor_X(processManager, sensor_X_pinIdentifier);
 ExternalInterruptPin<Platform> sensor_Y(processManager, sensor_Y_pinIdentifier); 	//Active Low
 ExternalInterruptPin<Platform> sensor_Z(processManager, sensor_Z_pinIdentifier); 	//Active Low
 
-//filter
-FuzzyFilter<ExternalInterruptPin<Platform>, Platform> sensor_X_filter(timingManager, sensor_X);
+//filters
+FuzzyFilter<Platform> button_filter(processManager, timingManager, 1000.f);
+FuzzyFilter<Platform> sensor_X_filter(processManager, timingManager);
 
 //devices
 M415C<Platform> m415c_X(stepPin_X, directionPin_X);

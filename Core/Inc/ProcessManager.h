@@ -2,6 +2,14 @@
 
 #include "ProcessRequest.h"
 
+#include "MyGPIO.h" 	//TODO: REMOVE THIS
+#include "PlatformSelection.h" 	//TODO: REMOVE THIS
+extern OutputPin<Platform> ld6; 	//blue 	//TODO: REMOVE THIS
+extern OutputPin<Platform> ld5; 	//red 	//TODO: REMOVE THIS
+extern OutputPin<Platform> ld4; 	//grn 	//TODO: REMOVE THIS
+extern OutputPin<Platform> ld3; 	//ora 	//TODO: REMOVE THIS
+
+
 template<typename Platform>
 class ProcessManager {
 private:
@@ -22,7 +30,7 @@ public:
 			first = &request;
 			last = &request;
 		} else {
-			//1 item in queue
+			//1 or more items in queue
 			_addAfter(request, *last);
 			last = &request;
 		}
@@ -33,8 +41,9 @@ public:
 	void execute() {
 		disableInterrupts();
 		while (first != nullptr) {
-			first->execute();
-			_removeFirst();
+			ProcessRequest * toExecute = first;
+			_removeFirst(); 	//Make sure a process can add itself back to the queue; remove it first, then execute it.
+			toExecute->execute();
 		}
 		enableInterrupts();
 	}
@@ -64,7 +73,6 @@ public:
 
 	void _removeFirst() {
 		//assumes interrupts are already disabled
-
 		ProcessRequest * oldFirst = first;
 		//set new first
 		first = oldFirst->next; 	//set to nullptr if there's no next

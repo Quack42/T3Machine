@@ -1,5 +1,4 @@
 //What: TimingManager that starts processes at specific times/intervals, and measures passage of time.
-//TODO: Continue here: make a timingManager that can serve the needs of a stopwatch and fire off processes at the requested times.
 
 //State Running: Process is running, Timer is keeping count of time spent
 //State Waiting: Process is waiting for next timed event or interrupt. Timer is counting up to timed-event moment (and keeping track of time spent that way).
@@ -95,6 +94,8 @@ void TimingManager<Stm32F407Platform>::waitTillNextTask() {
 	updateTimeSinceStart();
 	//Add to-add tasks to list
 	addToAddTasksToTaskList();
+	//Remove to-remove tasks from list
+	// _removeToRemoveTasksFromTaskList(); 	//Run this AFTER addToAddTasksToTaskList
 
 	///Get earliest task wait-time
 	TimeValue timeToWait;
@@ -134,13 +135,14 @@ void TimingManager<Stm32F407Platform>::waitTillNextTask() {
 	updateTimeSinceStart();
 	//Add to-add tasks to list
 	addToAddTasksToTaskList();
+	//Remove to-remove tasks from list
+	// _removeToRemoveTasksFromTaskList(); 	//Run this AFTER addToAddTasksToTaskList
 
 	//Start timer to track how much time we spent in 'running' mode.
 	timerHandle.Init.Period = TIMER_TICKS_DURING_RUNNING-1;
 	HAL_TIM_Base_Init(&timerHandle); 	//NOTE: timerHandle reference is the exactly same as timerData.getTimerHandle(); this is just for readability
 	timerCycleTime = ticksToTimeValue(TIMER_TICKS_DURING_RUNNING);
 	HAL_TIM_Base_Start_IT(&timerData.getTimerHandle());
-
 
 	//Check if any task is ready to start
 	while (firstTask != nullptr && firstTask->isReadyToExecute()){

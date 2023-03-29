@@ -63,7 +63,69 @@ public:
 	// 	processManager.enableInterrupts();
 	// }
 
-	void waitTillNextTask();
+	void waitTillNextTask() {
+		//Stop timer
+		_stopTimer();
+
+		///Update tasks
+		TimeValue timeDifference;
+		processManager.disableInterrupts();
+		//compute time spent running
+		timeDifference = _getTimeSinceStart() - timeSinceStart;
+		//Update the timeSinceStart value again
+		_updateTimeSinceStart();
+		processManager.enableInterrupts();
+
+		//Add time passed to tracked time for all tasks
+		updateTaskListWithTimePassage(timeDifference);
+		//Add to-add tasks to list
+		addToAddTasksToTaskList();
+		//Remove to-remove tasks from list
+		// _removeToRemoveTasksFromTaskList(); 	//Run this AFTER addToAddTasksToTaskList
+
+		///Get earliest task wait-time
+		TimeValue timeToWait;
+		if (firstTask != nullptr) {
+			timeToWait = firstTask->getTimeUntilTaskStart();
+		} else {
+			timeToWait = DefaultTimeToWait;
+		}
+
+		///Start sleep-time for earliest task
+		_initSleepTimer(timeToWait);
+		_startTimer();
+		
+		//Sleep
+		processManager.sleep();
+		// Two options can occur after this:
+		// - timerISR calls processManager.awake(); The timer is done and we can update the timeSinceStart again.
+		// - an interrupt other than the TimeManager timer calls processManager.awake().
+
+		//Stop timer
+		_stopTimer();
+		processManager.disableInterrupts();
+		//compute time spent sleeping
+		timeDifference = _getTimeSinceStart() - timeSinceStart;
+		//Update the timeSinceStart value again
+		_updateTimeSinceStart();
+		processManager.enableInterrupts();
+		//Add time passed to time for all tasks (except the 'to-add' list)
+		updateTaskListWithTimePassage(timeDifference);
+		//Add to-add tasks to list
+		addToAddTasksToTaskList();
+		//Remove to-remove tasks from list
+		// _removeToRemoveTasksFromTaskList(); 	//Run this AFTER addToAddTasksToTaskList
+
+		//Start timer to track how much time we spent in 'running' mode.
+		_initExecutionTimer();
+		_startTimer();
+
+		//Check if any task is ready to start
+		while (firstTask != nullptr && firstTask->isReadyToExecute()){
+			processManager.requestProcess(firstTask->getProcessRequest());
+			firstTask = firstTask->next;
+		}
+	}
 
 	TimeValue getTimeSinceStart() {
 		processManager.disableInterrupts();
@@ -193,4 +255,9 @@ private:
 
 	TimeValue _getTimeSinceStart();
 	void _resetSubTimeSinceStart();
+
+	void _stopTimer();
+	void _startTimer();
+	void _initExecutionTimer();
+	void _initSleepTimer(TimeValue timeToWait);
 };

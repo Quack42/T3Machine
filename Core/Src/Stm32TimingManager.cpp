@@ -75,86 +75,70 @@ void TimingManager<Stm32F407Platform>::start() {
 // 	processManager.enableInterrupts();
 // }
 
-template<>
-void TimingManager<Stm32F407Platform>::waitTillNextTask() {
-	static constexpr TimeValue MaximumWaitTime(0, 5000, 0); 		//Choose this as maximum timer time as it seemed nicely convenient round number.
-	// constexpr TimeValue MaximumWaitTime(0, 6553, 5); 	//this is the actual maximum time according to the comments in the HAL, although reality seems different.
+// template<>
+// void TimingManager<Stm32F407Platform>::waitTillNextTask() {
+// 	//Stop timer
+// 	_stopTimer();
+
+// 	///Update tasks
+// 	TimeValue timeDifference;
+// 	processManager.disableInterrupts();
+// 	//compute time spent running
+// 	timeDifference = _getTimeSinceStart() - timeSinceStart;
+// 	//Update the timeSinceStart value again
+// 	_updateTimeSinceStart();
+// 	processManager.enableInterrupts();
+
+// 	//Add time passed to tracked time for all tasks
+// 	updateTaskListWithTimePassage(timeDifference);
+// 	//Add to-add tasks to list
+// 	addToAddTasksToTaskList();
+// 	//Remove to-remove tasks from list
+// 	// _removeToRemoveTasksFromTaskList(); 	//Run this AFTER addToAddTasksToTaskList
+
+// 	///Get earliest task wait-time
+// 	TimeValue timeToWait;
+// 	if (firstTask != nullptr) {
+// 		timeToWait = firstTask->getTimeUntilTaskStart();
+// 	} else {
+// 		timeToWait = DefaultTimeToWait;
+// 	}
+
+// 	///Start sleep-time for earliest task
+// 	_initSleepTimer(timeToWait);
+// 	_startTimer();
 	
-	//Stop timer
-	// HAL_TIM_Base_Stop_IT(&timerData.getTimerHandle());
+// 	//Sleep
+// 	processManager.sleep();
+// 	// Two options can occur after this:
+// 	// - timerISR calls processManager.awake(); The timer is done and we can update the timeSinceStart again.
+// 	// - an interrupt other than the TimeManager timer calls processManager.awake().
 
-	///Update tasks
-	TimeValue timeDifference;
-	processManager.disableInterrupts();
-	//compute time spent running
-	timeDifference = _getTimeSinceStart() - timeSinceStart;
-	//Update the timeSinceStart value again
-	_updateTimeSinceStart();
-	processManager.enableInterrupts();
+// 	//Stop timer
+// 	_stopTimer();
+// 	processManager.disableInterrupts();
+// 	//compute time spent sleeping
+// 	timeDifference = _getTimeSinceStart() - timeSinceStart;
+// 	//Update the timeSinceStart value again
+// 	_updateTimeSinceStart();
+// 	processManager.enableInterrupts();
+// 	//Add time passed to time for all tasks (except the 'to-add' list)
+// 	updateTaskListWithTimePassage(timeDifference);
+// 	//Add to-add tasks to list
+// 	addToAddTasksToTaskList();
+// 	//Remove to-remove tasks from list
+// 	// _removeToRemoveTasksFromTaskList(); 	//Run this AFTER addToAddTasksToTaskList
 
-	//Add time passed to tracked time for all tasks
-	updateTaskListWithTimePassage(timeDifference);
-	//Add to-add tasks to list
-	addToAddTasksToTaskList();
-	//Remove to-remove tasks from list
-	// _removeToRemoveTasksFromTaskList(); 	//Run this AFTER addToAddTasksToTaskList
+// 	//Start timer to track how much time we spent in 'running' mode.
+// 	_initExecutionTimer();
+// 	_startTimer();
 
-	///Get earliest task wait-time
-	TimeValue timeToWait;
-	if (firstTask != nullptr) {
-		timeToWait = firstTask->getTimeUntilTaskStart();
-	} else {
-		timeToWait = DefaultTimeToWait;
-	}
-
-	///Start sleep-time for earliest task
-	//Set sleep time
-	TIM_HandleTypeDef & timerHandle = timerData.getTimerHandle();
-	// timerHandle.Init.Period max value is 0xFFFF
-	if (timeToWait > MaximumWaitTime) {
-		uint32_t ticksToWait = MaximumWaitTime.us/US_PER_TICK + MaximumWaitTime.ms*TICKS_PER_MS;
-		timerHandle.Init.Period = ticksToWait-1;
-	} else {
-		uint32_t ticksToWait = timeToWait.us/US_PER_TICK + timeToWait.ms*TICKS_PER_MS;
-		timerHandle.Init.Period = ticksToWait-1; 	//-1 because it counts 0 as a tick? Some example explained it, I understood it, forgot it, and now I just know it should be done.
-	}
-	//Start timer
-	HAL_TIM_Base_Init(&timerHandle); 	//NOTE: timerHandle reference is the exactly same as timerData.getTimerHandle(); this is just for readability
-	timerCycleTime = timeToWait;
-	// HAL_TIM_Base_Start_IT(&timerData.getTimerHandle());
-	//Sleep
-	processManager.sleep();
-	// Two options can occur after this:
-	// - timerISR calls processManager.awake(); The timer is done and we can update the timeSinceStart again.
-	// - an interrupt other than the TimeManager timer calls processManager.awake().
-
-	//Stop timer
-	// HAL_TIM_Base_Stop_IT(&timerData.getTimerHandle());
-	processManager.disableInterrupts();
-	//compute time spent sleeping
-	timeDifference = _getTimeSinceStart() - timeSinceStart;
-	//Update the timeSinceStart value again
-	_updateTimeSinceStart();
-	processManager.enableInterrupts();
-	//Add time passed to time for all tasks (except the 'to-add' list)
-	updateTaskListWithTimePassage(timeDifference);
-	//Add to-add tasks to list
-	addToAddTasksToTaskList();
-	//Remove to-remove tasks from list
-	// _removeToRemoveTasksFromTaskList(); 	//Run this AFTER addToAddTasksToTaskList
-
-	//Start timer to track how much time we spent in 'running' mode.
-	timerHandle.Init.Period = TIMER_TICKS_DURING_RUNNING-1;
-	HAL_TIM_Base_Init(&timerHandle); 	//NOTE: timerHandle reference is the exactly same as timerData.getTimerHandle(); this is just for readability
-	timerCycleTime = ticksToTimeValue(TIMER_TICKS_DURING_RUNNING);
-	HAL_TIM_Base_Start_IT(&timerData.getTimerHandle());
-
-	//Check if any task is ready to start
-	while (firstTask != nullptr && firstTask->isReadyToExecute()){
-		processManager.requestProcess(firstTask->getProcessRequest());
-		firstTask = firstTask->next;
-	}
-}
+// 	//Check if any task is ready to start
+// 	while (firstTask != nullptr && firstTask->isReadyToExecute()){
+// 		processManager.requestProcess(firstTask->getProcessRequest());
+// 		firstTask = firstTask->next;
+// 	}
+// }
 
 
 
@@ -204,3 +188,40 @@ void TimingManager<Stm32F407Platform>::_resetSubTimeSinceStart() {
 // 	processManager.enableInterrupts();
 // 	return ret;
 // }
+
+template<>
+void TimingManager<Stm32F407Platform>::_stopTimer() {
+	HAL_TIM_Base_Stop_IT(&timerData.getTimerHandle());
+}
+template<>
+void TimingManager<Stm32F407Platform>::_startTimer() {
+	HAL_TIM_Base_Start_IT(&timerData.getTimerHandle());
+}
+
+template<>
+void TimingManager<Stm32F407Platform>::_initExecutionTimer() {
+	TIM_HandleTypeDef & timerHandle = timerData.getTimerHandle();
+	timerHandle.Init.Period = TIMER_TICKS_DURING_RUNNING-1;
+	HAL_TIM_Base_Init(&timerHandle); 	//NOTE: timerHandle reference is the exactly same as timerData.getTimerHandle(); this is just for readability
+	timerCycleTime = ticksToTimeValue(TIMER_TICKS_DURING_RUNNING);
+}
+
+template<>
+void TimingManager<Stm32F407Platform>::_initSleepTimer(TimeValue timeToWait) {
+	static constexpr TimeValue MaximumWaitTime(0, 5000, 0); 		//Choose this as maximum timer time as it seemed nicely convenient round number.
+	// constexpr TimeValue MaximumWaitTime(0, 6553, 5); 	//this is the actual maximum time according to the comments in the HAL, although reality seems different.
+
+	//Set sleep time
+	TIM_HandleTypeDef & timerHandle = timerData.getTimerHandle();
+	// timerHandle.Init.Period max value is 0xFFFF
+	if (timeToWait > MaximumWaitTime) {
+		uint32_t ticksToWait = MaximumWaitTime.us/US_PER_TICK + MaximumWaitTime.ms*TICKS_PER_MS;
+		timerHandle.Init.Period = ticksToWait-1;
+	} else {
+		uint32_t ticksToWait = timeToWait.us/US_PER_TICK + timeToWait.ms*TICKS_PER_MS;
+		timerHandle.Init.Period = ticksToWait-1; 	//-1 because it counts 0 as a tick? Some example explained it, I understood it, forgot it, and now I just know it should be done.
+	}
+	//Init timer
+	HAL_TIM_Base_Init(&timerHandle); 	//NOTE: timerHandle reference is the exactly same as timerData.getTimerHandle(); this is just for readability
+	timerCycleTime = timeToWait;
+}

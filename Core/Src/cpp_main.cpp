@@ -51,7 +51,19 @@ void cpp_main(void) {
 	drv8825_Z.init();
 
 	////////////////////////
-	// Setup connection
+	// Setup data connections
+
+	sensor_X.setSubscriberFunction([](bool pinValue){sensor_X_filter.input(pinValue);});
+	sensor_X_filter.setSubscriberFunction([](bool pinValue){t3Machine.input_sensorX(pinValue);});
+
+	sensor_Y.setSubscriberFunction([](bool pinValue){sensor_Y_filter.input(pinValue);});
+	sensor_Y_filter.setSubscriberFunction([](bool pinValue){t3Machine.input_sensorY(pinValue);});
+
+	sensor_Z.setSubscriberFunction([](bool pinValue){sensor_Z_filter.input(pinValue);});
+	sensor_Z_filter.setSubscriberFunction([](bool pinValue){t3Machine.input_sensorZ(pinValue);});
+
+	button.setSubscriberFunction([](bool pinValue){button_filter.input(pinValue);});
+	button_filter.setSubscriberFunction([](bool pinValue){if (pinValue) t3Machine.startMoving();});
 
 	button.setSubscriberFunction([](bool pinValue){button_filter.input(pinValue);});
 	// button.setSubscriberFunction([](bool pinValue){timingTest0.input(pinValue);});

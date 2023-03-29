@@ -56,11 +56,14 @@ public:
 			//button is released
 			ldOrange.low();
 			ldBlue.low();
-			//Start light show.
-			// lightShowTimedCallbackTask.setTimeUntilTaskStart(TimeValue(0,1000,0)); 	//TODO: uncomment
-			// timingManager.addTask(&lightShowTimedCallbackTask); 	//TODO: uncomment
-			// lightShowTimedCallbackTask.setTimeUntilTaskStart(TimeValue(0,11500,0)); 	//TODO: uncomment
-			// timingManager.addTask(&cancelLightShowTask); 	//TODO: uncomment
+
+			if (lightShowState == e_0) {
+				//Start light show.
+				lightShowTimedCallbackTask.setTimeUntilTaskStart(TimeValue(0,1000,0)); 	//TODO: uncomment
+				timingManager.addTask(&lightShowTimedCallbackTask); 	//TODO: uncomment
+				// cancelLightShowTask.setTimeUntilTaskStart(TimeValue(0,11500,0)); 	//TODO: uncomment
+				// timingManager.addTask(&cancelLightShowTask); 	//TODO: uncomment
+			}
 		}
 	}
 

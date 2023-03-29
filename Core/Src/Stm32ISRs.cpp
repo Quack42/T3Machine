@@ -45,7 +45,7 @@ void CPP_HAL_GPIO_EXTI_Callback(uint16_t pin) {
 void CPP_HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef * htim) {
 	if(htim == &htim10) {
 		// timingManager.awake();
-		timingManager.timerISR();
+		timingManager._timerISR();
 		// ld6.toggle();
 	}
 }

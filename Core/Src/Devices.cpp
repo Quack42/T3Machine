@@ -27,8 +27,10 @@ ExternalInterruptPin<Platform> sensor_Y(processManager, sensor_Y_pinIdentifier);
 ExternalInterruptPin<Platform> sensor_Z(processManager, sensor_Z_pinIdentifier); 	//Active Low
 
 //filters
-FuzzyFilter<Platform> button_filter(processManager, timingManager, 1000.f);
-FuzzyFilter<Platform> sensor_X_filter(processManager, timingManager);
+FuzzyFilter<Platform> button_filter(processManager, timingManager, kButtonFuzzyFilterFlipTime);
+FuzzyFilter<Platform> sensor_X_filter(processManager, timingManager, kSensorXFuzzyFilterFlipTime);
+FuzzyFilter<Platform> sensor_Y_filter(processManager, timingManager, kSensorYFuzzyFilterFlipTime);
+FuzzyFilter<Platform> sensor_Z_filter(processManager, timingManager, kSensorZFuzzyFilterFlipTime);
 
 //devices
 M415C<Platform> m415c_X(stepPin_X, directionPin_X);
@@ -38,16 +40,11 @@ T3Machine<
 	Platform,
 	M415C<Platform>,
 	M415C<Platform>,
-	DRV8825_MovementControl<Platform>,
-	ExternalInterruptPin<Platform>,
-	ExternalInterruptPin<Platform>,
-	ExternalInterruptPin<Platform>
+	DRV8825_MovementControl<Platform>
 	> t3Machine(
+		processManager,
 		timingManager,
 		m415c_X,
 		m415c_Y,
-		drv8825_Z,
-		sensor_X,
-		sensor_Y,
-		sensor_Z
+		drv8825_Z
 	);

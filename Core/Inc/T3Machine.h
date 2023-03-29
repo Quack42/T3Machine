@@ -11,19 +11,15 @@
 #include "SteppingTask.h"
 #include "HomingTask.h"
 
-template<typename Platform, typename DriverX, typename DriverY, typename DriverZ, typename SensorX, typename SensorY, typename SensorZ>
+template<typename Platform, typename DriverX, typename DriverY, typename DriverZ>
 class T3Machine {
 private:
 	//References
+	ProcessManager<Platform> & processManager; 	//TODO: check if used here.
 	TimingManager<Platform> & timingManager; 	//TODO: check if used here.
 	DriverX & driverX;
 	DriverY & driverY;
 	DriverZ & driverZ;
-	SensorX & sensorX;
-	SensorY & sensorY;
-	SensorZ & sensorZ;
-
-
 
 	//Variables
 	enum {
@@ -39,34 +35,30 @@ private:
 	SteppingTask<DriverX, Platform> steppingTask_X;
 	SteppingTask<DriverY, Platform> steppingTask_Y;
 	SteppingTask<DriverZ, Platform> steppingTask_Z;
-	HomingAxisTask<DriverX, SensorX, Platform> homingAxisTask_X;
-	HomingAxisTask<DriverY, SensorY, Platform> homingAxisTask_Y;
-	HomingAxisTask<DriverZ, SensorZ, Platform> homingAxisTask_Z;
-	HomingTask<DriverX, DriverY, DriverZ, SensorX, SensorY, SensorZ, Platform> homingTask;
+	HomingAxisTask<DriverX, Platform> homingAxisTask_X;
+	HomingAxisTask<DriverY, Platform> homingAxisTask_Y;
+	HomingAxisTask<DriverZ, Platform> homingAxisTask_Z;
+	HomingTask<DriverX, DriverY, DriverZ, Platform> homingTask;
 
 public:
-	T3Machine(	TimingManager<Platform> & timingManager,
+	T3Machine(	ProcessManager<Platform> & processManager,
+				TimingManager<Platform> & timingManager,
 				DriverX & driverX,
 				DriverY & driverY,
-				DriverZ & driverZ,
-				SensorX & sensorX,
-				SensorY & sensorY,
-				SensorZ & sensorZ
+				DriverZ & driverZ
 	) :
+			processManager(processManager),
 			timingManager(timingManager),
 			driverX(driverX),
 			driverY(driverY),
 			driverZ(driverZ),
-			sensorX(sensorX),
-			sensorY(sensorY),
-			sensorZ(sensorZ),
 			state_e(e_idle),
-			steppingTask_X(timingManager, driverX, positionX),
-			steppingTask_Y(timingManager, driverY, positionY),
-			steppingTask_Z(timingManager, driverZ, positionZ),
-			homingAxisTask_X(sensorX, steppingTask_X, positionX),
-			homingAxisTask_Y(sensorY, steppingTask_Y, positionY),
-			homingAxisTask_Z(sensorZ, steppingTask_Z, positionZ),
+			steppingTask_X(processManager, timingManager, driverX, positionX),
+			steppingTask_Y(processManager, timingManager, driverY, positionY),
+			steppingTask_Z(processManager, timingManager, driverZ, positionZ),
+			homingAxisTask_X(processManager, steppingTask_X, positionX),
+			homingAxisTask_Y(processManager, steppingTask_Y, positionY),
+			homingAxisTask_Z(processManager, steppingTask_Z, positionZ),
 			homingTask(homingAxisTask_X, homingAxisTask_Y, homingAxisTask_Z)
 	{
 
@@ -76,22 +68,20 @@ public:
 		homingTask.start();
 	}
 
-	void tick(const float & timeSlept) {
-		//tick tasks (note that the order matters; lowest-level first)
-		steppingTask_X.tick(timeSlept);
-		steppingTask_Y.tick(timeSlept);
-		steppingTask_Z.tick(timeSlept);
-		homingAxisTask_X.tick(timeSlept);
-		homingAxisTask_Y.tick(timeSlept);
-		homingAxisTask_Z.tick(timeSlept);
-		homingTask.tick(timeSlept);
+	void startMoving() {
+		steppingTask_Z.startSteppingTask(100);
+	}
 
-		// if (sensorX.getValue()) {
-		// 	if (!homingTask.isActive()){
-		// 		//shouldn't trigger sensors outside of homing task
-		// 		emergencyStop();
-		// 	}
-		// }
+	void input_sensorX(bool sensorXValue) {
+		homingTask.input_sensorX(sensorXValue);
+	}
+
+	void input_sensorY(bool sensorXValue) {
+		homingTask.input_sensorY(sensorXValue);
+	}
+
+	void input_sensorZ(bool sensorXValue) {
+		homingTask.input_sensorZ(sensorXValue);
 	}
 
 private:

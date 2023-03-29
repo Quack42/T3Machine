@@ -33,6 +33,10 @@ public:
 
 	}
 
+	void init();
+
+	void start();
+
 	void addTask(TimedTask * task) {
 		//prevent looped-linked-list
 		if (toAddListContainsTask(task) || taskListContainsTask(task)) {
@@ -61,12 +65,14 @@ public:
 
 	void waitTillNextTask();
 
-	TimeValue getTimeSinceStart();
+	TimeValue getTimeSinceStart() {
+		processManager.disableInterrupts();
+		TimeValue ret = _getTimeSinceStart();
+		processManager.enableInterrupts();
+		return ret;
+	}
 
-	void init();
-
-	void timerISR();
-	void start();
+	void _timerISR();
 
 private:
 	bool toAddListContainsTask(TimedTask * task) {
@@ -93,7 +99,23 @@ private:
 	// 	return (currentToRemove == task);
 	// }
 
-	void updateTimeSinceStart();
+	void _updateTimeSinceStart() {
+		//assumes interrupts are disabled
+		//Update timeSinceStart
+		timeSinceStart = _getTimeSinceStart(); 	//simply use the calculated time to record the new one. From this point on the response of getTimeSinceStart() is invalid.
+		//Reset timer-based tracking of time
+		_resetSubTimeSinceStart();
+	}
+
+	//NOTE: DON'T call from ISR
+	void updateTimeSinceStart() {
+		//disable interrupts so nothing uses "getTimeSinceStart" at an invalid moment; needs to be before the next line
+		processManager.disableInterrupts();
+		//Update timeSinceStart
+		_updateTimeSinceStart();
+		//From this point on, the response of getTimeSinceStart() is valid again, so we can re-enable interrupts.
+		processManager.enableInterrupts();
+	}
 
 	void addToAddTasksToTaskList() {
 		//Unfortunately we can't just uncouple to-add list from firstTask_toAddList, so we can work on them without having to worry about interrupts.
@@ -159,7 +181,6 @@ private:
 	// 	}
 	// }
 
-	TimeValue _getTimeSinceStart();
 
 	void updateTaskListWithTimePassage(TimeValue timePassed) {
 		TimedTask * current = firstTask;
@@ -169,4 +190,7 @@ private:
 		}
 	}
 
+
+	TimeValue _getTimeSinceStart();
+	void _resetSubTimeSinceStart();
 };

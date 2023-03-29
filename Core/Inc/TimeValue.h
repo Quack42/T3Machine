@@ -23,6 +23,14 @@ public:
 
 	}
 
+	constexpr TimeValue(const float & ms) :
+			days(static_cast<uint32_t>(ms/MS_IN_A_DAY)),
+			ms(static_cast<uint32_t>(ms - days * MS_IN_A_DAY)),
+			us(static_cast<uint16_t>(US_IN_A_MS*(ms - this->ms - days * MS_IN_A_DAY)))
+	{
+
+	}
+
 	constexpr TimeValue(uint16_t days, uint32_t ms, uint16_t us) :
 			days(days),
 			ms(ms),

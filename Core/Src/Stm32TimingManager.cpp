@@ -35,8 +35,6 @@ TimeValue ticksToTimeValue(uint32_t ticks) {
 //declare specialization BEFORE use
 template<>
 TimeValue TimingManager<Stm32F407Platform>::_getTimeSinceStart();
-template<>
-TimeValue TimingManager<Stm32F407Platform>::getTimeSinceStart();
 
 //TIM_HandleTypeDef tim2_initStruct = {0};
 template<>
@@ -64,34 +62,38 @@ void TimingManager<Stm32F407Platform>::start() {
 }
 
 
-//NOTE: DON'T call from ISR
-template<>
-void TimingManager<Stm32F407Platform>::updateTimeSinceStart() {
-	//disable interrupts so nothing uses "getTimeSinceStart" at an invalid moment; needs to be before the next line
-	processManager.disableInterrupts();
-	//Update timeSinceStart
-	timeSinceStart = _getTimeSinceStart(); 	//simply use the calculated time to record the new one. From this point on the response of getTimeSinceStart() is invalid.
-	//Reset timer-based tracking of time
-	timerInterruptCount = 0;
-	__HAL_TIM_SET_COUNTER(&timerData.getTimerHandle(), 0);
-	//From this point on, the response of getTimeSinceStart() is valid again, so we can re-enable interrupts.
-	processManager.enableInterrupts();
-}
+// //NOTE: DON'T call from ISR
+// template<>
+// void TimingManager<Stm32F407Platform>::updateTimeSinceStart() {
+// 	//disable interrupts so nothing uses "getTimeSinceStart" at an invalid moment; needs to be before the next line
+// 	processManager.disableInterrupts();
+// 	//Update timeSinceStart
+// 	timeSinceStart = _getTimeSinceStart(); 	//simply use the calculated time to record the new one. From this point on the response of getTimeSinceStart() is invalid.
+// 	//Reset timer-based tracking of time
+// 	_resetSubTimeSinceStart();
+// 	//From this point on, the response of getTimeSinceStart() is valid again, so we can re-enable interrupts.
+// 	processManager.enableInterrupts();
+// }
 
 template<>
 void TimingManager<Stm32F407Platform>::waitTillNextTask() {
 	static constexpr TimeValue MaximumWaitTime(0, 5000, 0); 		//Choose this as maximum timer time as it seemed nicely convenient round number.
 	// constexpr TimeValue MaximumWaitTime(0, 6553, 5); 	//this is the actual maximum time according to the comments in the HAL, although reality seems different.
 	
-	///Update tasks
 	//Stop timer
-	HAL_TIM_Base_Stop_IT(&timerData.getTimerHandle());
-	//Add time passed to tracked time for all tasks
+	// HAL_TIM_Base_Stop_IT(&timerData.getTimerHandle());
+
+	///Update tasks
 	TimeValue timeDifference;
-	timeDifference = getTimeSinceStart() - timeSinceStart;
+	processManager.disableInterrupts();
+	//compute time spent running
+	timeDifference = _getTimeSinceStart() - timeSinceStart;
+	//Update the timeSinceStart value again
+	_updateTimeSinceStart();
+	processManager.enableInterrupts();
+
+	//Add time passed to tracked time for all tasks
 	updateTaskListWithTimePassage(timeDifference);
-	///Add to recorded time and reset;
-	updateTimeSinceStart();
 	//Add to-add tasks to list
 	addToAddTasksToTaskList();
 	//Remove to-remove tasks from list
@@ -119,7 +121,7 @@ void TimingManager<Stm32F407Platform>::waitTillNextTask() {
 	//Start timer
 	HAL_TIM_Base_Init(&timerHandle); 	//NOTE: timerHandle reference is the exactly same as timerData.getTimerHandle(); this is just for readability
 	timerCycleTime = timeToWait;
-	HAL_TIM_Base_Start_IT(&timerData.getTimerHandle());
+	// HAL_TIM_Base_Start_IT(&timerData.getTimerHandle());
 	//Sleep
 	processManager.sleep();
 	// Two options can occur after this:
@@ -127,12 +129,15 @@ void TimingManager<Stm32F407Platform>::waitTillNextTask() {
 	// - an interrupt other than the TimeManager timer calls processManager.awake().
 
 	//Stop timer
-	HAL_TIM_Base_Stop_IT(&timerData.getTimerHandle());
-	//Add time passed to time for all tasks (except the 'to-add' list)
-	timeDifference = getTimeSinceStart() - timeSinceStart;
-	updateTaskListWithTimePassage(timeDifference);
+	// HAL_TIM_Base_Stop_IT(&timerData.getTimerHandle());
+	processManager.disableInterrupts();
+	//compute time spent sleeping
+	timeDifference = _getTimeSinceStart() - timeSinceStart;
 	//Update the timeSinceStart value again
-	updateTimeSinceStart();
+	_updateTimeSinceStart();
+	processManager.enableInterrupts();
+	//Add time passed to time for all tasks (except the 'to-add' list)
+	updateTaskListWithTimePassage(timeDifference);
 	//Add to-add tasks to list
 	addToAddTasksToTaskList();
 	//Remove to-remove tasks from list
@@ -153,8 +158,9 @@ void TimingManager<Stm32F407Platform>::waitTillNextTask() {
 
 
 
+//public
 template<>
-void TimingManager<Stm32F407Platform>::timerISR() {
+void TimingManager<Stm32F407Platform>::_timerISR() {
 	timerInterruptCount++;
 	processManager.awake();
 }
@@ -186,9 +192,15 @@ TimeValue TimingManager<Stm32F407Platform>::_getTimeSinceStart() {
 }
 
 template<>
-TimeValue TimingManager<Stm32F407Platform>::getTimeSinceStart() {
-	processManager.disableInterrupts();
-	TimeValue ret = _getTimeSinceStart();
-	processManager.enableInterrupts();
-	return ret;
+void TimingManager<Stm32F407Platform>::_resetSubTimeSinceStart() {
+	timerInterruptCount = 0;
+	__HAL_TIM_SET_COUNTER(&timerData.getTimerHandle(), 0);
 }
+
+// template<>
+// TimeValue TimingManager<Stm32F407Platform>::getTimeSinceStart() {
+// 	processManager.disableInterrupts();
+// 	TimeValue ret = _getTimeSinceStart();
+// 	processManager.enableInterrupts();
+// 	return ret;
+// }

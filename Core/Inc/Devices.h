@@ -4,7 +4,6 @@
 #include "Pins.h"
 
 //process control
-#include "Timing.h"
 #include "Timers.h"
 #include "TimingManager.h"
 #include "ProcessManager.h"
@@ -43,6 +42,8 @@ extern ExternalInterruptPin<Platform> sensor_Z;
 //filters
 extern FuzzyFilter<Platform> button_filter;
 extern FuzzyFilter<Platform> sensor_X_filter;
+extern FuzzyFilter<Platform> sensor_Y_filter;
+extern FuzzyFilter<Platform> sensor_Z_filter;
 
 
 //devices
@@ -53,8 +54,5 @@ extern T3Machine<
 	Platform,
 	M415C<Platform>,
 	M415C<Platform>,
-	DRV8825_MovementControl<Platform>,
-	ExternalInterruptPin<Platform>,
-	ExternalInterruptPin<Platform>,
-	ExternalInterruptPin<Platform>
+	DRV8825_MovementControl<Platform>
 	> t3Machine;

@@ -208,6 +208,7 @@ void TimingManager<Stm32F407Platform>::_initExecutionTimer() {
 
 template<>
 void TimingManager<Stm32F407Platform>::_initSleepTimer(TimeValue timeToWait) {
+	//static constexpr TimeValue MaximumWaitTime(0, 500, 0);
 	static constexpr TimeValue MaximumWaitTime(0, 5000, 0); 		//Choose this as maximum timer time as it seemed nicely convenient round number.
 	// constexpr TimeValue MaximumWaitTime(0, 6553, 5); 	//this is the actual maximum time according to the comments in the HAL, although reality seems different.
 
@@ -217,11 +218,18 @@ void TimingManager<Stm32F407Platform>::_initSleepTimer(TimeValue timeToWait) {
 	if (timeToWait > MaximumWaitTime) {
 		uint32_t ticksToWait = MaximumWaitTime.us/US_PER_TICK + MaximumWaitTime.ms*TICKS_PER_MS;
 		timerHandle.Init.Period = ticksToWait-1;
+		timerCycleTime = MaximumWaitTime;
 	} else {
 		uint32_t ticksToWait = timeToWait.us/US_PER_TICK + timeToWait.ms*TICKS_PER_MS;
 		timerHandle.Init.Period = ticksToWait-1; 	//-1 because it counts 0 as a tick? Some example explained it, I understood it, forgot it, and now I just know it should be done.
+		timerCycleTime = timeToWait;
 	}
+
+	//minimum sleep time; stuff breaks otherwise.
+	if (timerHandle.Init.Period == 0) {
+		timerHandle.Init.Period = 1;
+	}
+
 	//Init timer
 	HAL_TIM_Base_Init(&timerHandle); 	//NOTE: timerHandle reference is the exactly same as timerData.getTimerHandle(); this is just for readability
-	timerCycleTime = timeToWait;
 }

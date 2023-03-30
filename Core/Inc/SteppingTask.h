@@ -4,12 +4,12 @@
 #include "ProcessManager.h"
 #include "SubscriberLL.h"
 
-// #include "MyGPIO.h" 	//TODO: REMOVE THIS
-// #include "PlatformSelection.h" 	//TODO: REMOVE THIS
+#include "MyGPIO.h" 	//TODO: REMOVE THIS
+#include "PlatformSelection.h" 	//TODO: REMOVE THIS
 // extern OutputPin<Platform> ld6; 	//blue 	//TODO: REMOVE THIS
-// extern OutputPin<Platform> ld5; 	//red 	//TODO: REMOVE THIS
+extern OutputPin<Platform> ld5; 	//red 	//TODO: REMOVE THIS
 // extern OutputPin<Platform> ld4; 	//grn 	//TODO: REMOVE THIS
-// extern OutputPin<Platform> ld3; 	//ora 	//TODO: REMOVE THIS
+extern OutputPin<Platform> ld3; 	//ora 	//TODO: REMOVE THIS
 
 template<typename Driver, typename Platform>
 class SteppingTask {
@@ -110,7 +110,7 @@ public:
 			case e_toIdle:
 				state = e_idle;
 				// ld6.high();
-				// ld5.low();
+				ld5.low();
 				// ld4.low();
 				advertiseStop();
 				// ld6.low();
@@ -142,8 +142,8 @@ private:
 	//task functions
 	void stepHigh() {
 		//set pin high
-		// ld5.low();
-		// ld3.high();
+		ld5.low();
+		ld3.high();
 		driver.setStepPin(true);
 		//indicate next state-step is to make it low
 		state = e_toStepLow;
@@ -170,8 +170,8 @@ private:
 			//need another step
 			state = e_toStepHigh;
 		}
-		// ld3.low();
-		// ld5.high();
+		ld3.low();
+		ld5.high();
 
 		//update position index
 		positionIndex++;

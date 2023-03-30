@@ -63,11 +63,11 @@ void cpp_main(void) {
 	sensor_Z_filter.setSubscriberFunction([](bool pinValue){t3Machine.input_sensorZ(pinValue);});
 
 	button.setSubscriberFunction([](bool pinValue){button_filter.input(pinValue);});
-	button_filter.setSubscriberFunction([](bool pinValue){if (pinValue) t3Machine.startMoving();});
+	button_filter.setSubscriberFunction([](bool pinValue){if (pinValue) {t3Machine.startMoving();}});
 
-	button.setSubscriberFunction([](bool pinValue){button_filter.input(pinValue);});
-	// button.setSubscriberFunction([](bool pinValue){timingTest0.input(pinValue);});
-	button_filter.setSubscriberFunction([](bool pinValue){timingTest0.input(pinValue);});
+	// button.setSubscriberFunction([](bool pinValue){button_filter.input(pinValue);});
+	// // button.setSubscriberFunction([](bool pinValue){timingTest0.input(pinValue);});
+	// button_filter.setSubscriberFunction([](bool pinValue){timingTest0.input(pinValue);});
 
 	////////////////////////
 	timingManager.start(); 	//'startRunning'

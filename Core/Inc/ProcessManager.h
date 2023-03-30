@@ -12,22 +12,24 @@ private:
 
 public:
 	void requestProcess(ProcessRequest & request) {
+		disableInterrupts();
 		if ((request.next != nullptr) || (first == &request) || (last == &request)) {
-			//already present in queue somewhere
+			//already present in queue somewhere (either it's 'last' in the queue or request.next points to another ProcessRequest (which means it's also in a queue))
+			enableInterrupts();
 			return;
 		}
-		disableInterrupts();
 		if (first == nullptr) {
 			//nothing in queue, add it
 			first = &request;
 			last = &request;
 		} else {
 			//1 or more items in queue
-			_addAfter(request, *last);
+			request.next = last->next;
+			last->next = &request;
 			last = &request;
 		}
-		enableInterrupts();
 		awake();
+		enableInterrupts();
 	}
 
 	void execute() {
@@ -57,11 +59,6 @@ public:
 	void disableInterrupts();
 	void enableInterrupts();
 public:
-	void _addAfter(ProcessRequest & toAdd, ProcessRequest & afterThis) {
-		//assumes interrupts are already disabled
-		toAdd.next = afterThis.next;
-		afterThis.next = &toAdd;
-	}
 
 	void _removeFirst() {
 		//assumes interrupts are already disabled

@@ -32,11 +32,10 @@ public:
 	}
 
 	constexpr TimeValue(uint16_t days, uint32_t ms, uint16_t us) :
-			days(days),
-			ms(ms),
-			us(us)
+			days(days + ms/MS_IN_A_DAY),
+			ms(ms%MS_IN_A_DAY + us/US_IN_A_MS),
+			us(us%US_IN_A_MS)
 	{
-
 	}
 
 	bool operator>(const TimeValue & rhs) const {
@@ -57,14 +56,14 @@ public:
 		uint32_t daysToSubtract = rhs.days;
 		if (ret.us < rhs.us) {
 			msToSubtract++;
-			ret.us = ret.us + 1000 - rhs.us;
+			ret.us = ret.us + US_IN_A_MS - rhs.us;
 		} else {
 			ret.us -= rhs.us;
 		}
 
 		if (ret.ms < msToSubtract) {
 			daysToSubtract++;
-			ret.ms = ret.ms + MS_IN_A_DAY - rhs.ms; 
+			ret.ms = ret.ms + MS_IN_A_DAY - msToSubtract; 
 		} else {
 			ret.ms -= msToSubtract;
 		}

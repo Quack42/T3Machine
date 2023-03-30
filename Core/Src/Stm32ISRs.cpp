@@ -4,8 +4,11 @@
 #include "Pins.h"
 #include "Devices.h"
 #include "Stm32PinIdentifier.h"
+#include "Timers.h"
+#include "Stm32TimerData.h"
 
-extern TIM_HandleTypeDef htim10; 	//Used for timingManager
+
+// extern TIM_HandleTypeDef htim10; 	//Used for timingManager
 
 
 //pin interrupt service routine
@@ -43,7 +46,8 @@ void CPP_HAL_GPIO_EXTI_Callback(uint16_t pin) {
 
 //timer interrupt service routine
 void CPP_HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef * htim) {
-	if(htim == &htim10) {
+	if(htim == &timingManagerTimer.getTimerHandle()) {
+	// if(htim == &htim10) {
 		// timingManager.awake();
 		timingManager._timerISR();
 		// ld6.toggle();

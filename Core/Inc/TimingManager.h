@@ -4,9 +4,14 @@
 #include "TimerData.h"
 #include "TimeValue.h"
 #include "ConfigurableConstants.h"
-
-
 #include "TimedTask.h"
+
+#include "MyGPIO.h" 	//TODO: REMOVE THIS
+#include "PlatformSelection.h" 	//TODO: REMOVE THIS
+extern OutputPin<Platform> ld6; 	//blue 	//TODO: REMOVE THIS
+// extern OutputPin<Platform> ld5; 	//red 	//TODO: REMOVE THIS
+extern OutputPin<Platform> ld4; 	//grn 	//TODO: REMOVE THIS
+// extern OutputPin<Platform> ld3; 	//ora 	//TODO: REMOVE THIS
 
 
 template<typename Platform>
@@ -39,17 +44,18 @@ public:
 
 	void addTask(TimedTask * task) {
 		//prevent looped-linked-list
+		processManager.disableInterrupts(); 	//Disable interrupts: This function can also be called from interrupts.
 		if (toAddListContainsTask(task) || taskListContainsTask(task)) {
 			//already in to-add list or actual running list
+			processManager.enableInterrupts();
 			return;
 		}
 		//Add task to to-add list
-		processManager.disableInterrupts(); 	//Disable interrupts: This function can also be called from interrupts.
 		task->next = firstTask_toAddList;
 		firstTask_toAddList = task;
-		processManager.enableInterrupts();
 		//Awake the process so they are added without further delay.
 		processManager.awake();
+		processManager.enableInterrupts();
 	}
 
 	// void removeTask(TimedTask * taskToRemove) {
@@ -96,6 +102,7 @@ public:
 		_startTimer();
 		
 		//Sleep
+		// ld6.low();
 		processManager.sleep();
 		// Two options can occur after this:
 		// - timerISR calls processManager.awake(); The timer is done and we can update the timeSinceStart again.
@@ -124,6 +131,9 @@ public:
 		while (firstTask != nullptr && firstTask->isReadyToExecute()){
 			processManager.requestProcess(firstTask->getProcessRequest());
 			firstTask = firstTask->next;
+		}
+		if (firstTask == nullptr) {
+			ld4.high();
 		}
 	}
 
@@ -200,6 +210,8 @@ private:
 				if ((firstTask == nullptr) || (firstTask->getTimeUntilTaskStart() > taskToAdd->getTimeUntilTaskStart())) {
 					taskToAdd->next = firstTask;
 					firstTask = taskToAdd;
+
+					ld4.low();
 				} else {
 					//check the rest of the list
 					TimedTask * current = firstTask;
@@ -210,6 +222,7 @@ private:
 					//taskToAdd is BEFORE current->next task (or current->next is nullptr); so add it before, but after current
 					taskToAdd->next = current->next;
 					current->next = taskToAdd;
+					ld4.low();
 				}
 			}
 

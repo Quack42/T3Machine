@@ -10,8 +10,6 @@
 #include <cstdint>
 #include <functional>
 
-//TODO: Continue here: The sensor input isn't nice and clear, as expectable, so I'd like to add a bit of a fuzzy filter concept to it. Unfortunately, there is a process-flow 'hindrance' in my architecture design. I'd like to switch to a process flow that follows the input-data (e.g. interrupts call it's subscribers, like fuzzy logic, which in turn calls t3machine if a value changes, etc.)
-
 template <typename Platform>
 class FuzzyFilter {
 private:
@@ -147,11 +145,12 @@ private:
 			}
 			float msUntilExpectedSwitch = ratioToTraverseUntilSwitch * fullSwitchTime;
 			//float to TimeValue
-			TimeValue timeUntilExpectedSwitch(
-				static_cast<uint32_t>(msUntilExpectedSwitch/MS_IN_A_DAY), 				//the cast cuts off the decimal numbers (i.e. anything less than a day)
-				static_cast<uint32_t>(msUntilExpectedSwitch) % MS_IN_A_DAY, 			//the cast cuts off the decimal numbers (i.e. anything less than a ms). Modulo is to ignore everything above the ms-in-a-day domain.
-				static_cast<uint32_t>(msUntilExpectedSwitch*US_IN_A_MS + 0.5f) % US_IN_A_MS 	//convert ms to us, cast is required for modulo (+0.5f is for proper rounding). Modulo is to ignore everything above the us domain.
-			);
+			TimeValue timeUntilExpectedSwitch(msUntilExpectedSwitch);
+			// TimeValue timeUntilExpectedSwitch(
+			// 	static_cast<uint32_t>(msUntilExpectedSwitch/MS_IN_A_DAY), 				//the cast cuts off the decimal numbers (i.e. anything less than a day)
+			// 	static_cast<uint32_t>(msUntilExpectedSwitch) % MS_IN_A_DAY, 			//the cast cuts off the decimal numbers (i.e. anything less than a ms). Modulo is to ignore everything above the ms-in-a-day domain.
+			// 	static_cast<uint32_t>(msUntilExpectedSwitch*US_IN_A_MS + 0.5f) % US_IN_A_MS 	//convert ms to us, cast is required for modulo (+0.5f is for proper rounding). Modulo is to ignore everything above the us domain.
+			// );
 
 			//Schedule wake up:
 			switchFuzzyBooleanStateTask.setTimeUntilTaskStart(timeUntilExpectedSwitch);

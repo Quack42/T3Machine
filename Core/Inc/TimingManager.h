@@ -102,8 +102,9 @@ public:
 		_startTimer();
 		
 		//Sleep
-		// ld6.low();
+		ld6.low();
 		processManager.sleep();
+		ld6.high();
 		// Two options can occur after this:
 		// - timerISR calls processManager.awake(); The timer is done and we can update the timeSinceStart again.
 		// - an interrupt other than the TimeManager timer calls processManager.awake().
@@ -128,7 +129,7 @@ public:
 		_startTimer();
 
 		//Check if any task is ready to start
-		while (firstTask != nullptr && firstTask->isReadyToExecute()){
+		while ((firstTask != nullptr) && firstTask->isReadyToExecute()){
 			processManager.requestProcess(firstTask->getProcessRequest());
 			firstTask = firstTask->next;
 		}

@@ -69,7 +69,7 @@ public:
 	}
 
 	void startMoving() {
-		steppingTask_Z.startSteppingTask(10000);
+		steppingTask_X.startSteppingTask(10000);
 	}
 
 	void input_sensorX(bool sensorXValue) {

@@ -11,6 +11,8 @@
 #include "stm32f4xx_hal.h"
 #include "stm32f4xx_hal_tim.h"
 
+#include <algorithm>
+
 //Check RCC_APB1ENR, and RCC_APB2ENR register in Reference Manual (RM0090) to find out which TIM's go with which APB's (for input clock frequency).
 
 #define SYSTEM_HZ (168000000)
@@ -216,14 +218,11 @@ void TimingManager<Stm32F407Platform>::_initSleepTimer(TimeValue timeToWait) {
 	TIM_HandleTypeDef & timerHandle = timerData.getTimerHandle();
 	// timerHandle.Init.Period max value is 0xFFFF
 	if (timeToWait > MaximumWaitTime) {
-		uint32_t ticksToWait = MaximumWaitTime.us/US_PER_TICK + MaximumWaitTime.ms*TICKS_PER_MS;
-		timerHandle.Init.Period = ticksToWait-1;
-		timerCycleTime = MaximumWaitTime;
-	} else {
-		uint32_t ticksToWait = timeToWait.us/US_PER_TICK + timeToWait.ms*TICKS_PER_MS;
-		timerHandle.Init.Period = ticksToWait-1; 	//-1 because it counts 0 as a tick? Some example explained it, I understood it, forgot it, and now I just know it should be done.
-		timerCycleTime = timeToWait;
+		timeToWait = MaximumWaitTime;
 	}
+	uint32_t ticksToWait = std::max(2ul, timeToWait.us/US_PER_TICK + timeToWait.ms*TICKS_PER_MS);
+
+	timerHandle.Init.Period = ticksToWait-1; 	//-1 because it counts 0 as a tick? Some example explained it, I understood it, forgot it, and now I just know it should be done.
 
 	//minimum sleep time; stuff breaks otherwise.
 	if (timerHandle.Init.Period == 0) {
@@ -232,4 +231,5 @@ void TimingManager<Stm32F407Platform>::_initSleepTimer(TimeValue timeToWait) {
 
 	//Init timer
 	HAL_TIM_Base_Init(&timerHandle); 	//NOTE: timerHandle reference is the exactly same as timerData.getTimerHandle(); this is just for readability
+	timerCycleTime = timeToWait;
 }

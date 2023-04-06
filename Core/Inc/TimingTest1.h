@@ -15,6 +15,7 @@ private:
 	Timer<Platform> & timer;
 	//Components
 	//Variables
+	int counter;
 
 public:
 	TimingTest1(
@@ -24,9 +25,10 @@ public:
 			//References
 			ldOrange(ldOrange),
 			ldBlue(ldBlue),
-			timer(timer)
+			timer(timer),
 			//Components
 			//Variables
+			counter(0)
 	{
 		
 	}
@@ -42,11 +44,12 @@ public:
 			ldBlue.high();
 			timer.stop();
 		} else {
+			counter = 0;
 			//button is released
 			ldBlue.low();
 
 			//start timer test
-			timer.setTime(TimeValue(0,10000,0)); 	// 1 second
+			timer.setTime(TimeValue(0,1000,0)); 	// 1 second
 			timer.start();
 		}
 	}
@@ -54,7 +57,21 @@ public:
 private:
 
 	void timerISR() {
-		ldOrange.low();
+		ldOrange.toggle();
+		counter++;
+
+		if (counter & 1) {
+			timer.setTime(TimeValue(0.05f * (201-(counter%200)))); 	// 1 second
+		} else {
+			timer.setTime(TimeValue(0.05f * (1+counter%200))); 	// 1 second
+		}
+		if (counter < 2000){
+			timer.start();
+		} else {
+			ldOrange.low();
+		}
+
+		// ldOrange.low();
 		// ldBlue.low();
 	}
 

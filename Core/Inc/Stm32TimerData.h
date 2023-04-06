@@ -80,21 +80,14 @@ public:
 	}
 
 	constexpr TimeValue calcMaximumTimeToWait() const {
-		// //get seconds per tick
-		// float secondsPerTick = 1.0f/getTicksPerSecond();
-
-		// //get maximum ticks per cycle
-		// uint16_t kMaximumTicksPerCycle = 0xFFFF;
-
-		// float maximumTimeInS = kMaximumTicksPerCycle * secondsPerTick;
-		// float maximumTimeInMS = maximumTimeInS / MS_IN_A_S;
-		// return TimeValue (maximumTimeInMS);
-		return TimeValue (0,5000,0);
+		// Get maximum seconds per cycle
+		const uint16_t kMaximumTicksPerCycle = 0xFFFF;
+		float secondsPerCycle = kMaximumTicksPerCycle/getTicksPerSecond();
+		// Convert to TimeValue
+		return TimeValue (secondsPerCycle*MS_IN_A_S);
 	}
 
-	// const TimeValue getMaximumTimeToWait() const {
 	const TimeValue & getMaximumTimeToWait() const {
-		// return TimeValue(0,1000,0); 	//TODO: remove this
-		return kMaximumTimeToWait; 	//TODO: uncomment this
+		return kMaximumTimeToWait;
 	}
 };

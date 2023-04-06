@@ -46,7 +46,7 @@ public:
 			ldBlue.low();
 
 			//start timer test
-			timer.setTime(TimeValue(0,1000,0)); 	// 1 second
+			timer.setTime(TimeValue(0,10000,0)); 	// 1 second
 			timer.start();
 		}
 	}

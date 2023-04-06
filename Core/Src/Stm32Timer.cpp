@@ -32,16 +32,15 @@ void Timer<Stm32F407Platform>::init() {
 
 template<>
 void Timer<Stm32F407Platform>::setTime(TimeValue timeToWait) {
-	//assumes the timer was stopped; undefined behavior otherwise
-	this->timeToWait = timeToWait;
 
 	//first determine whether this is more than the maximum time to wait
 
 	const TimeValue kMaximumTimeToWait = timerConstants.getMaximumTimeToWait();
 
-	if (timeToWait > kMaximumTimeToWait) {
+	TimeValue timeUntilNextInterrupt = timeToWait;
+	if (timeUntilNextInterrupt > kMaximumTimeToWait) {
 		//wait time is longer than maximum wait time.
-		timeToWait = kMaximumTimeToWait; 	//note that this is not the member 'timeToWait', but the parameter given when calling this function.
+		timeUntilNextInterrupt = kMaximumTimeToWait;
 	}
 
 	float ticksPerSecond = timerConstants.getTicksPerSecond();
@@ -50,12 +49,16 @@ void Timer<Stm32F407Platform>::setTime(TimeValue timeToWait) {
 	float ticksPerDay = ticksPerSecond * S_IN_A_DAY;
 
 	// uint32_t ticksToWait = 10*5000;
-	uint32_t ticksToWait = std::max(2ul, static_cast<uint32_t>(0.5f + timeToWait.us*ticksPerUS + timeToWait.ms*ticksPerMS + timeToWait.days*ticksPerDay));
+	uint32_t ticksToWait = std::max(2ul, static_cast<uint32_t>(0.5f + timeUntilNextInterrupt.us*ticksPerUS + timeUntilNextInterrupt.ms*ticksPerMS + timeUntilNextInterrupt.days*ticksPerDay));
 
+	//TODO: disable interrupts
 	//configure timer to use that period.
 	TIM_HandleTypeDef & timerHandle = timerData.getTimerHandle();
 	__HAL_TIM_SET_AUTORELOAD(&timerHandle, ticksToWait-1); 	 	//-1 because it counts 0 as a tick? Some example explained it, I understood it, forgot it, and now I just know it should be done.
 
+	//assumes the timer was stopped; undefined behavior otherwise
+	this->timeToWait = timeToWait;
+	//TODO: enable interrupts
 }
 
 template<>
@@ -73,13 +76,14 @@ void Timer<Stm32F407Platform>::stop() {
 
 template<>
 void Timer<Stm32F407Platform>::_isr() {
-	// const TimeValue kMaximumTimeToWait = timerConstants.getMaximumTimeToWait();
-	// if (timeToWait > kMaximumTimeToWait) {
-	// 	timeToWait -= kMaximumTimeToWait;
-	// } else {
-	// 	timeToWait = TimeValue();
-	// 	__HAL_TIM_DISABLE_IT(htim, TIM_IT_UPDATE);
-	// }
-	stop();
-	isr();
+	const TimeValue kMaximumTimeToWait = timerConstants.getMaximumTimeToWait();
+	if (timeToWait > kMaximumTimeToWait) {
+		timeToWait -= kMaximumTimeToWait;
+		setTime(timeToWait);
+	} else {
+		timeToWait = TimeValue();
+		// __HAL_TIM_DISABLE_IT(htim, TIM_IT_UPDATE);
+		stop();
+		isr();
+	}
 }

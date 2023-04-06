@@ -10,22 +10,23 @@
 
 #include "stm32f4xx_hal.h"
 #include "stm32f4xx_hal_tim.h"
+#include "ConfigurableConstants.h"
 
 #include <algorithm>
 
 //Check RCC_APB1ENR, and RCC_APB2ENR register in Reference Manual (RM0090) to find out which TIM's go with which APB's (for input clock frequency).
 
-#define SYSTEM_HZ (168000000)
-#define TICKS_PER_SECOND (10000)
-#define TICKS_PER_MS (10)
-#define US_PER_TICK (100)
-#define TIMER_PRESCALER ((SYSTEM_HZ) / (TICKS_PER_SECOND))
+// #define SYSTEM_HZ (168000000)
+// #define TICKS_PER_SECOND (10000)
+// #define TICKS_PER_MS (10)
+// #define US_PER_TICK (100)
+// #define TIMER_PRESCALER (kSystemFrequency / (TICKS_PER_SECOND))
 
-#define TIMER_TICKS_DURING_RUNNING (100000)
-#define SECONDS_PER_TIMER_ITERATION_DURING_RUNNING_MODE (TIMER_TICKS_DURING_RUNNING / TICKS_PER_SECOND) 	//make sure this division doesn't end up in a fraction
+#define TIMER_TICKS_DURING_RUNNING (100000) 	//NOTE: must be 2 or higher
+// #define SECONDS_PER_TIMER_ITERATION_DURING_RUNNING_MODE (TIMER_TICKS_DURING_RUNNING / TICKS_PER_SECOND) 	//make sure this division doesn't end up in a fraction
 
 uint32_t ticksToUS(uint32_t ticks){
-	uint32_t us = ticks*(US_IN_A_S / TICKS_PER_SECOND);
+	uint32_t us = ticks*(US_IN_A_S / kTimingManagerTicksPerSecond);
 	return us;
 }
 
@@ -42,11 +43,11 @@ TimeValue TimingManager<Stm32F407Platform>::_getTimeSinceStart();
 template<>
 void TimingManager<Stm32F407Platform>::init() {
 	TIM_HandleTypeDef & timerHandle = timerData.getTimerHandle();
-	timerHandle.Instance = TIM10;
-	timerHandle.Init.Prescaler = TIMER_PRESCALER-1; 	//168MHz
+	timerHandle.Instance = timerConstants.getTimerBase();
+	timerHandle.Init.Prescaler = timerConstants.getPrescaler()-1; 	//168MHz
 	timerHandle.Init.CounterMode = TIM_COUNTERMODE_UP;
 	timerHandle.Init.Period = TIMER_TICKS_DURING_RUNNING-1;
-	timerHandle.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+	timerHandle.Init.ClockDivision = timerConstants.getClockDivisionRegisterValue();
 	timerHandle.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
 	__HAL_TIM_URS_ENABLE(&timerHandle); 	//don't trigger interrupt by reinitializing CNT value
 	timerCycleTime = ticksToTimeValue(TIMER_TICKS_DURING_RUNNING);
@@ -58,9 +59,9 @@ template<>
 void TimingManager<Stm32F407Platform>::start() {
 	TIM_HandleTypeDef & timerHandle = timerData.getTimerHandle();
 	timerHandle.Init.Period = TIMER_TICKS_DURING_RUNNING-1;
-	HAL_TIM_Base_Init(&timerData.getTimerHandle());
+	HAL_TIM_Base_Init(&timerHandle);
 	timerCycleTime = ticksToTimeValue(TIMER_TICKS_DURING_RUNNING);
-	HAL_TIM_Base_Start_IT(&timerData.getTimerHandle());
+	HAL_TIM_Base_Start_IT(&timerHandle);
 }
 
 
@@ -197,14 +198,18 @@ void TimingManager<Stm32F407Platform>::_stopTimer() {
 }
 template<>
 void TimingManager<Stm32F407Platform>::_startTimer() {
-	HAL_TIM_Base_Start_IT(&timerData.getTimerHandle());
+	TIM_HandleTypeDef & timerHandle = timerData.getTimerHandle();
+	__HAL_TIM_CLEAR_FLAG(&timerHandle, TIM_FLAG_UPDATE); 	//clear interrupt flag
+	HAL_TIM_Base_Start_IT(&timerHandle);
 }
 
 template<>
 void TimingManager<Stm32F407Platform>::_initExecutionTimer() {
 	TIM_HandleTypeDef & timerHandle = timerData.getTimerHandle();
-	timerHandle.Init.Period = TIMER_TICKS_DURING_RUNNING-1;
-	HAL_TIM_Base_Init(&timerHandle); 	//NOTE: timerHandle reference is the exactly same as timerData.getTimerHandle(); this is just for readability
+	__HAL_TIM_SET_AUTORELOAD(&timerHandle, TIMER_TICKS_DURING_RUNNING-1); 	//-1 because it counts 0 as a tick? Some example explained it, I understood it, forgot it, and now I just know it should be done.
+
+	// timerHandle.Init.Period = TIMER_TICKS_DURING_RUNNING-1;
+	// HAL_TIM_Base_Init(&timerHandle); 	//NOTE: timerHandle reference is the exactly same as timerData.getTimerHandle(); this is just for readability
 	timerCycleTime = ticksToTimeValue(TIMER_TICKS_DURING_RUNNING);
 }
 
@@ -220,16 +225,18 @@ void TimingManager<Stm32F407Platform>::_initSleepTimer(TimeValue timeToWait) {
 	if (timeToWait > MaximumWaitTime) {
 		timeToWait = MaximumWaitTime;
 	}
-	uint32_t ticksToWait = std::max(2ul, timeToWait.us/US_PER_TICK + timeToWait.ms*TICKS_PER_MS);
+	uint32_t ticksToWait = std::max(2ul, timeToWait.us/kTimingManagerUSPerTick + timeToWait.ms*kTimingManagerTicksPerMS);
 
-	timerHandle.Init.Period = ticksToWait-1; 	//-1 because it counts 0 as a tick? Some example explained it, I understood it, forgot it, and now I just know it should be done.
+	__HAL_TIM_SET_AUTORELOAD(&timerHandle, ticksToWait-1); 	//-1 because it counts 0 as a tick? Some example explained it, I understood it, forgot it, and now I just know it should be done.
 
-	//minimum sleep time; stuff breaks otherwise.
-	if (timerHandle.Init.Period == 0) {
-		timerHandle.Init.Period = 1;
-	}
+	// timerHandle.Init.Period = ticksToWait-1; 	//-1 because it counts 0 as a tick? Some example explained it, I understood it, forgot it, and now I just know it should be done.
 
-	//Init timer
-	HAL_TIM_Base_Init(&timerHandle); 	//NOTE: timerHandle reference is the exactly same as timerData.getTimerHandle(); this is just for readability
+	// //minimum sleep time; stuff breaks otherwise.
+	// if (timerHandle.Init.Period == 0) {
+	// 	timerHandle.Init.Period = 1;
+	// }
+
+	// //Init timer
+	// HAL_TIM_Base_Init(&timerHandle); 	//NOTE: timerHandle reference is the exactly same as timerData.getTimerHandle(); this is just for readability
 	timerCycleTime = timeToWait;
 }

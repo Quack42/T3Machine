@@ -53,7 +53,7 @@ public:
 		fuzzyBooleanState = initialValue;
 		stopWatch.start();
 		updateTimer(initialValue);
-		processManager.requestProcess(advertiseTask);
+		// processManager.requestProcess(advertiseTask);
 	}
 
 	void input(bool inputValue) {

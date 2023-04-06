@@ -3,9 +3,14 @@
 #include <cstdint>
 
 
-#define MS_IN_A_DAY (24*60*60*1000)
-#define US_IN_A_MS (1000)
-#define MS_IN_A_S (1000)
+#define HOURS_IN_A_DAY (24ul)
+#define MINUTES_IN_AN_HOUR (60ul)
+#define SECONDS_IN_A_MINUTE (60ul)
+#define MS_IN_A_S (1000ul)
+#define US_IN_A_MS (1000ul)
+
+#define S_IN_A_DAY (SECONDS_IN_A_MINUTE * MINUTES_IN_AN_HOUR * HOURS_IN_A_DAY)
+#define MS_IN_A_DAY (S_IN_A_DAY * MS_IN_A_S)
 #define US_IN_A_S (US_IN_A_MS * MS_IN_A_S)
 
 

@@ -8,10 +8,10 @@
 
 #include "MyGPIO.h" 	//TODO: REMOVE THIS
 #include "PlatformSelection.h" 	//TODO: REMOVE THIS
-extern OutputPin<Platform> ld6; 	//blue 	//TODO: REMOVE THIS
-// extern OutputPin<Platform> ld5; 	//red 	//TODO: REMOVE THIS
+// extern OutputPin<Platform> ld6; 	//blue 	//TODO: REMOVE THIS
+// // extern OutputPin<Platform> ld5; 	//red 	//TODO: REMOVE THIS
 extern OutputPin<Platform> ld4; 	//grn 	//TODO: REMOVE THIS
-// extern OutputPin<Platform> ld3; 	//ora 	//TODO: REMOVE THIS
+// // extern OutputPin<Platform> ld3; 	//ora 	//TODO: REMOVE THIS
 
 
 template<typename Platform>
@@ -20,6 +20,7 @@ private:
 	//references
 	ProcessManager<Platform> & processManager;
 	TimerData<Platform> & timerData;
+	const TimerConstants<Platform> & timerConstants;
 
 	uint32_t timerInterruptCount = 0;
 	TimeValue timerCycleTime;
@@ -30,9 +31,10 @@ private:
 	// TimedTask * firstTask_toRemoveList = nullptr;
 	
 public:
-	TimingManager(ProcessManager<Platform> & processManager, TimerData<Platform> & timerData) :
+	TimingManager(ProcessManager<Platform> & processManager, TimerData<Platform> & timerData, const TimerConstants<Platform> & timerConstants) :
 			processManager(processManager),
 			timerData(timerData),
+			timerConstants(timerConstants),
 			timeSinceStart(0,0,0)
 	{
 
@@ -102,9 +104,9 @@ public:
 		_startTimer();
 		
 		//Sleep
-		ld6.low();
+		// ld6.low();
 		processManager.sleep();
-		ld6.high();
+		// ld6.high();
 		// Two options can occur after this:
 		// - timerISR calls processManager.awake(); The timer is done and we can update the timeSinceStart again.
 		// - an interrupt other than the TimeManager timer calls processManager.awake().
@@ -134,7 +136,7 @@ public:
 			firstTask = firstTask->next;
 		}
 		if (firstTask == nullptr) {
-			ld4.high();
+			// ld4.high();
 		}
 	}
 
@@ -212,7 +214,7 @@ private:
 					taskToAdd->next = firstTask;
 					firstTask = taskToAdd;
 
-					ld4.low();
+					// ld4.low();
 				} else {
 					//check the rest of the list
 					TimedTask * current = firstTask;
@@ -223,7 +225,7 @@ private:
 					//taskToAdd is BEFORE current->next task (or current->next is nullptr); so add it before, but after current
 					taskToAdd->next = current->next;
 					current->next = taskToAdd;
-					ld4.low();
+					// ld4.low();
 				}
 			}
 

@@ -4,7 +4,8 @@
 
 //platform
 ProcessManager<Platform> processManager;
-TimingManager<Platform> timingManager(processManager, timingManagerTimer);
+TimingManager<Platform> timingManager(processManager, timingManagerTimerData, timingManagerTimerConstants);
+// TimingManager<Platform> timingManager(processManager, timingManagerTimer);
 
 
 //output pins
@@ -31,6 +32,8 @@ FuzzyFilter<Platform> button_filter(processManager, timingManager, kButtonFuzzyF
 FuzzyFilter<Platform> sensor_X_filter(processManager, timingManager, kSensorXFuzzyFilterFlipTime);
 FuzzyFilter<Platform> sensor_Y_filter(processManager, timingManager, kSensorYFuzzyFilterFlipTime);
 FuzzyFilter<Platform> sensor_Z_filter(processManager, timingManager, kSensorZFuzzyFilterFlipTime);
+
+
 
 //devices
 M415C<Platform> m415c_X(stepPin_X, directionPin_X);

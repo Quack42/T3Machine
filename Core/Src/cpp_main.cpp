@@ -21,7 +21,7 @@
 // ld6.toggle(); 	//TODO: REMOVE THIS
 
 // TimingTest0<Platform> timingTest0(processManager, timingManager, ld3, ld6);
-TimingTest1<Platform> timingTest1(ld3, ld6, steppingTaskTimer);
+// TimingTest1<Platform> timingTest1(ld3, ld6, steppingTaskTimer);
 
 void cpp_main(void) {
 	//init platform
@@ -52,11 +52,13 @@ void cpp_main(void) {
 	m415c_Y.init();
 	drv8825_Z.init();
 
+	t3Machine.init();
+
 	//init timers
 	steppingTaskTimer.init();
 
 	//init tests
-	timingTest1.init();
+	// timingTest1.init();
 
 	////////////////////////
 	// Setup data connections
@@ -71,8 +73,8 @@ void cpp_main(void) {
 	sensor_Z_filter.setSubscriberFunction([](bool pinValue){t3Machine.input_sensorZ(pinValue);});
 
 	button.setSubscriberFunction([](bool pinValue){button_filter.input(pinValue);});
-	button_filter.setSubscriberFunction([](bool pinValue){timingTest1.input(pinValue);});
-	// button_filter.setSubscriberFunction([](bool pinValue){if (pinValue) {t3Machine.startMoving();}});
+	// button_filter.setSubscriberFunction([](bool pinValue){timingTest1.input(pinValue);});
+	button_filter.setSubscriberFunction([](bool pinValue){if (pinValue) {t3Machine.startMoving();}});
 
 	// button.setSubscriberFunction([](bool pinValue){button_filter.input(pinValue);});
 	// // button.setSubscriberFunction([](bool pinValue){timingTest0.input(pinValue);});

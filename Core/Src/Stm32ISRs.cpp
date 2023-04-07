@@ -53,7 +53,7 @@ void CPP_HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef * htim) {
 		// ld6.toggle();
 	} else if(htim == &steppingTaskTimerData.getTimerHandle()) {
 		steppingTaskTimer._isr();
-		ld5.toggle();
+		// ld5.toggle();
 	}
 }
 

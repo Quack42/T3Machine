@@ -1,5 +1,6 @@
 #include "Devices.h"
 
+#include "Timers.h"
 #include "FuzzyFilter.h"
 
 //platform
@@ -49,5 +50,6 @@ T3Machine<
 		timingManager,
 		m415c_X,
 		m415c_Y,
-		drv8825_Z
+		drv8825_Z,
+		steppingTaskTimer
 	);

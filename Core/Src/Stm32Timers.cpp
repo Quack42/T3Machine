@@ -18,17 +18,18 @@ extern TIM_HandleTypeDef htim11; 	//generated in main.c
 extern TIM_HandleTypeDef htim12; 	//generated in main.c
 
 // Platform specific information
-TimerData<Stm32F407Platform> timingManagerTimerData(htim10);
-extern constexpr TimerConstants<Stm32F407Platform> timingManagerTimerConstants(TIM10_BASE, kAPB2TimerFrequency, (kAPB2TimerFrequency/kTimingManagerTicksPerSecond), TIM_CLOCKDIVISION_DIV1);
+TimerData<Stm32F407Platform> timingManagerTimerData(htim12);
+extern constexpr TimerConstants<Stm32F407Platform> timingManagerTimerConstants(TIM12_BASE, kAPB1TimerFrequency, (kAPB1TimerFrequency/kSteppingTaskTicksPerSecond), TIM_CLOCKDIVISION_DIV1);
 
 TimerData<Stm32F407Platform> steppingTaskXTimerData(htim9);
 extern constexpr TimerConstants<Stm32F407Platform> steppingTaskXTimerConstants(TIM9_BASE, kAPB2TimerFrequency, (kAPB2TimerFrequency/kSteppingTaskTicksPerSecond), TIM_CLOCKDIVISION_DIV1);
 
-TimerData<Stm32F407Platform> steppingTaskYTimerData(htim11);
-extern constexpr TimerConstants<Stm32F407Platform> steppingTaskYTimerConstants(TIM11_BASE, kAPB2TimerFrequency, (kAPB2TimerFrequency/kSteppingTaskTicksPerSecond), TIM_CLOCKDIVISION_DIV1);
+TimerData<Stm32F407Platform> steppingTaskYTimerData(htim10);
+extern constexpr TimerConstants<Stm32F407Platform> steppingTaskYTimerConstants(TIM10_BASE, kAPB2TimerFrequency, (kAPB2TimerFrequency/kTimingManagerTicksPerSecond), TIM_CLOCKDIVISION_DIV1);
 
-TimerData<Stm32F407Platform> steppingTaskZTimerData(htim12);
-extern constexpr TimerConstants<Stm32F407Platform> steppingTaskZTimerConstants(TIM12_BASE, kAPB1TimerFrequency, (kAPB1TimerFrequency/kSteppingTaskTicksPerSecond), TIM_CLOCKDIVISION_DIV1);
+TimerData<Stm32F407Platform> steppingTaskZTimerData(htim11);
+extern constexpr TimerConstants<Stm32F407Platform> steppingTaskZTimerConstants(TIM11_BASE, kAPB2TimerFrequency, (kAPB2TimerFrequency/kSteppingTaskTicksPerSecond), TIM_CLOCKDIVISION_DIV1);
+
 
 
 // TimerData<Stm32F407Platform> steppingTaskXTimerData(htim9);

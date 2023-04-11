@@ -55,7 +55,9 @@ void cpp_main(void) {
 	t3Machine.init();
 
 	//init timers
-	steppingTaskTimer.init();
+	steppingTaskXTimer.init();
+	steppingTaskYTimer.init();
+	steppingTaskZTimer.init();
 
 	//init tests
 	// timingTest1.init();

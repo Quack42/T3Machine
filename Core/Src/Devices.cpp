@@ -51,5 +51,7 @@ T3Machine<
 		m415c_X,
 		m415c_Y,
 		drv8825_Z,
-		steppingTaskTimer
+		steppingTaskXTimer,
+		steppingTaskYTimer,
+		steppingTaskZTimer
 	);

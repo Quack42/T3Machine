@@ -51,8 +51,14 @@ void CPP_HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef * htim) {
 		// timingManager.awake();
 		timingManager._timerISR();
 		// ld6.toggle();
-	} else if(htim == &steppingTaskTimerData.getTimerHandle()) {
-		steppingTaskTimer._isr();
+	} else if(htim == &steppingTaskXTimerData.getTimerHandle()) {
+		steppingTaskXTimer._isr();
+		// ld5.toggle();
+	} else if(htim == &steppingTaskYTimerData.getTimerHandle()) {
+		steppingTaskYTimer._isr();
+		// ld5.toggle();
+	} else if(htim == &steppingTaskZTimerData.getTimerHandle()) {
+		steppingTaskZTimer._isr();
 		// ld5.toggle();
 	}
 }

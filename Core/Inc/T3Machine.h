@@ -46,7 +46,9 @@ public:
 				DriverX & driverX,
 				DriverY & driverY,
 				DriverZ & driverZ,
-				Timer<Platform> & steppingTaskXTimer
+				Timer<Platform> & steppingTaskXTimer,
+				Timer<Platform> & steppingTaskYTimer,
+				Timer<Platform> & steppingTaskZTimer
 	) :
 			processManager(processManager),
 			timingManager(timingManager),
@@ -55,8 +57,8 @@ public:
 			driverZ(driverZ),
 			state_e(e_idle),
 			steppingTask_X(processManager, timingManager, steppingTaskXTimer, driverX, positionX),
-			steppingTask_Y(processManager, timingManager, steppingTaskXTimer, driverY, positionY),
-			steppingTask_Z(processManager, timingManager, steppingTaskXTimer, driverZ, positionZ),
+			steppingTask_Y(processManager, timingManager, steppingTaskYTimer, driverY, positionY),
+			steppingTask_Z(processManager, timingManager, steppingTaskZTimer, driverZ, positionZ),
 			homingAxisTask_X(processManager, steppingTask_X, positionX),
 			homingAxisTask_Y(processManager, steppingTask_Y, positionY),
 			homingAxisTask_Z(processManager, steppingTask_Z, positionZ),
@@ -67,8 +69,8 @@ public:
 
 	void init() {
 		steppingTask_X.init();
-		// steppingTask_Y.init(); 	//Uncomment this when it has a timer of its own
-		// steppingTask_Z.init(); 	//Uncomment this when it has a timer of its own
+		steppingTask_Y.init(); 	//Uncomment this when it has a timer of its own
+		steppingTask_Z.init(); 	//Uncomment this when it has a timer of its own
 	}
 
 	void startHoming() {

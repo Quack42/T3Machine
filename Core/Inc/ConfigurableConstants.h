@@ -11,6 +11,8 @@ constexpr float kSensorZFuzzyFilterFlipTime = 100.f;
 
 //system specific constants
 constexpr uint32_t kSystemFrequency = 168000000ul;
+constexpr uint32_t kAPB1TimerFrequency = kSystemFrequency/2;
+constexpr uint32_t kAPB2TimerFrequency = kSystemFrequency;
 
 constexpr unsigned long kTimingManagerTicksPerSecond = 10000ul;
 constexpr unsigned long kTimingManagerTicksPerMS = kTimingManagerTicksPerSecond / MS_IN_A_S;

@@ -69,8 +69,9 @@ public:
 
 	void init() {
 		steppingTask_X.init();
-		steppingTask_Y.init(); 	//Uncomment this when it has a timer of its own
-		steppingTask_Z.init(); 	//Uncomment this when it has a timer of its own
+		steppingTask_Y.init();
+		steppingTask_Z.init();
+		homingTask.init();
 	}
 
 	void startHoming() {

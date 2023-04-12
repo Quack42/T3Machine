@@ -2,6 +2,14 @@
 
 #include "HomingAxisTask.h"
 
+#include "MyGPIO.h" 	//TODO: REMOVE THIS
+#include "PlatformSelection.h" 	//TODO: REMOVE THIS
+extern OutputPin<Platform> ld6; 	//blue 	//TODO: REMOVE THIS
+extern OutputPin<Platform> ld5; 	//red 	//TODO: REMOVE THIS
+extern OutputPin<Platform> ld4; 	//grn 	//TODO: REMOVE THIS
+extern OutputPin<Platform> ld3; 	//ora 	//TODO: REMOVE THIS
+
+
 template<typename DriverX, typename DriverY, typename DriverZ, typename Platform>
 class HomingTask {
 private:
@@ -36,6 +44,13 @@ public:
 			homingAxisTaskZStoppedSubscription(std::bind(&HomingTask::homingAxisTaskZStoppedCallback, this)),
 			state_e(e_idle)
 	{
+
+	}
+
+	void init() {
+		homingAxisTask_X.subscribeToStop(&homingAxisTaskXStoppedSubscription);
+		homingAxisTask_Y.subscribeToStop(&homingAxisTaskYStoppedSubscription);
+		homingAxisTask_Z.subscribeToStop(&homingAxisTaskZStoppedSubscription);
 	}
 
 	void start() {
@@ -49,15 +64,18 @@ public:
 	void input_sensorX(bool sensorXValue) {
 		homingAxisTask_X.input_sensor(sensorXValue);
 	}
+
 	void input_sensorY(bool sensorYValue) {
 		homingAxisTask_Y.input_sensor(sensorYValue);
 	}
+
 	void input_sensorZ(bool sensorZValue) {
 		homingAxisTask_Z.input_sensor(sensorZValue);
 	}
 
 private:
 	void homingAxisTaskXStoppedCallback() {
+		ld4.high();
 		if (state_e == e_homingX) {
 			state_homingX();
 		}
@@ -75,9 +93,11 @@ private:
 
 	/// -- State functions -- ///
 
-
 	void stateSwitch_toHomingX() {
 		state_e = e_homingX;
+		ld3.high();
+		ld5.low();
+		ld6.low();
 		homingAxisTask_X.start();
 	}
 
@@ -89,6 +109,9 @@ private:
 
 	void stateSwitch_toHomingY() {
 		state_e = e_homingY;
+		ld3.low();
+		ld5.high();
+		ld6.low();
 		homingAxisTask_Y.start();
 	}
 
@@ -100,6 +123,9 @@ private:
 
 	void stateSwitch_toHomingZ() {
 		state_e = e_homingZ;
+		ld3.low();
+		ld5.low();
+		ld6.high();
 		homingAxisTask_Z.start();
 	}
 
@@ -111,6 +137,9 @@ private:
 
 	void stateSwitch_toDone() {
 		state_e = e_done;
+		ld3.low();
+		ld5.low();
+		ld6.low();		
 	}
 
 	/// -- End of State functions -- ///

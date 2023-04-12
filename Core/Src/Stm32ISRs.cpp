@@ -15,7 +15,6 @@
 void CPP_HAL_GPIO_EXTI_Callback(uint16_t pin) {
 	if (pin == sensor_X.getPinIdentifier().getPin()) {
 		sensor_X.isr();
-		
 
 		// steppingTask.stop();
 		//for fun; keep LD5 (red) LED matched to sensor_X value

@@ -139,7 +139,7 @@ private:
 		state_e = e_done;
 		ld3.low();
 		ld5.low();
-		ld6.low();		
+		ld6.low();
 	}
 
 	/// -- End of State functions -- ///

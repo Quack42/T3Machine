@@ -34,6 +34,7 @@ FuzzyFilter<Platform> sensor_X_filter(processManager, timingManager, kSensorXFuz
 FuzzyFilter<Platform> sensor_Y_filter(processManager, timingManager, kSensorYFuzzyFilterFlipTime);
 FuzzyFilter<Platform> sensor_Z_filter(processManager, timingManager, kSensorZFuzzyFilterFlipTime);
 
+VCOM_Buffered<Platform, kVCOM_TXBufferSize, kVCOM_RXBufferSize> vcom(processManager);
 
 
 //devices

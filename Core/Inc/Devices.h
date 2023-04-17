@@ -9,12 +9,13 @@
 #include "ProcessManager.h"
 
 //entities
-#include "M415C.h"
-#include "DRV8825.h"
 #include "MyGPIO.h"
 #include "MyExternalInterruptPin.h"
-#include "T3Machine.h"
 #include "FuzzyFilter.h"
+#include "VCOM.h"
+#include "M415C.h"
+#include "DRV8825.h"
+#include "T3Machine.h"
 
 //platform
 extern ProcessManager<Platform> processManager;
@@ -44,6 +45,10 @@ extern FuzzyFilter<Platform> button_filter;
 extern FuzzyFilter<Platform> sensor_X_filter;
 extern FuzzyFilter<Platform> sensor_Y_filter;
 extern FuzzyFilter<Platform> sensor_Z_filter;
+
+//components
+extern VCOM_Buffered<Platform, kVCOM_TXBufferSize, kVCOM_RXBufferSize> vcom;
+
 
 
 //devices

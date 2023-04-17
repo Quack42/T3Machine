@@ -12,6 +12,8 @@
 #include "Pins.h"
 #include "Devices.h"
 
+
+
 // #include "TimingTest0.h"
 // #include "TimingTest1.h"
 
@@ -77,6 +79,8 @@ void cpp_main(void) {
 	// button_filter.setSubscriberFunction([](bool pinValue){timingTest1.input(pinValue);});
 	// button_filter.setSubscriberFunction([](bool pinValue){if (pinValue) {t3Machine.startMoving();}});
 	button_filter.setSubscriberFunction([](bool pinValue){if (pinValue) {t3Machine.startHoming();}});
+
+	vcom.setSubscriberFunction([](uint8_t data){vcom.transmit(data);});
 
 	// button.setSubscriberFunction([](bool pinValue){button_filter.input(pinValue);});
 	// // button.setSubscriberFunction([](bool pinValue){timingTest0.input(pinValue);});

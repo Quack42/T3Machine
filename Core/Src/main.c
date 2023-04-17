@@ -18,7 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "usb_host.h"
+#include "usb_device.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -63,8 +63,6 @@ static void MX_TIM10_Init(void);
 static void MX_TIM11_Init(void);
 static void MX_TIM9_Init(void);
 static void MX_TIM12_Init(void);
-void MX_USB_HOST_Process(void);
-
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -104,11 +102,11 @@ int main(void)
   MX_GPIO_Init();
   MX_I2S3_Init();
   MX_SPI1_Init();
-  MX_USB_HOST_Init();
   MX_TIM10_Init();
   MX_TIM11_Init();
   MX_TIM9_Init();
   MX_TIM12_Init();
+  MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
   //call CPP main
 	cpp_main();
@@ -119,7 +117,6 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   //TODO: do something with MX_USB_HOST_Process()-call below
     /* USER CODE END WHILE */
-    MX_USB_HOST_Process();
 
     /* USER CODE BEGIN 3 */
   /* USER CODE END 3 */

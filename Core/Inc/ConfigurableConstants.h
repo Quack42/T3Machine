@@ -23,7 +23,11 @@ constexpr unsigned long kSteppingTaskTicksPerSecond = 10000ul;
 // constexpr unsigned long kSteppingTaskTicksPerMS = kSteppingTaskTicksPerSecond / MS_IN_A_S;
 // constexpr unsigned long kSteppingTaskUSPerTick = (1.f/static_cast<float>(kSteppingTaskTicksPerSecond) * US_IN_A_S) + 0.5f; 	//+0.5f for rounding
 
+// Constants for VCOM
+constexpr unsigned int kVCOM_TXBufferSize = 100;
+constexpr unsigned int kVCOM_RXBufferSize = 100;
 
+// Constants for mathematical model of machine.
 constexpr float kMMPerRotationXAxis = 2.0f; 	//TODO: find this
 constexpr float kMMPerRotationYAxis = 2.0f; 	//TODO: find this
 constexpr float kMMPerRotationZAxis = 8.0f; 	//TODO: find this
@@ -35,3 +39,4 @@ constexpr unsigned int kTicksPerRotationZAxis = 200; 	//TODO: find this
 constexpr float kMMPerTickXAxis = kMMPerRotationXAxis / kTicksPerRotationXAxis;
 constexpr float kMMPerTickYAxis = kMMPerRotationYAxis / kTicksPerRotationYAxis;
 constexpr float kMMPerTickZAxis = kMMPerRotationZAxis / kTicksPerRotationZAxis;
+

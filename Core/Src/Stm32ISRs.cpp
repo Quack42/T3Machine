@@ -62,4 +62,12 @@ void CPP_HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef * htim) {
 	}
 }
 
+void CPP_USB_CDC_DataReceived(uint8_t * data, uint32_t dataLength) {
+	vcom.receivedISR(data, dataLength);	
+}
+
+void CPP_USB_CDC_DataTransmissionComplete() {
+	vcom.transmissionCompleteISR();
+}
+
 // #endif //STM32

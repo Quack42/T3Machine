@@ -40,5 +40,9 @@ constexpr float kMMPerTickXAxis = kMMPerRotationXAxis / kTicksPerRotationXAxis;
 constexpr float kMMPerTickYAxis = kMMPerRotationYAxis / kTicksPerRotationYAxis;
 constexpr float kMMPerTickZAxis = kMMPerRotationZAxis / kTicksPerRotationZAxis;
 
+constexpr float kMovementRangeX = 10.f; 	// In mm. 	//TODO: find this
+constexpr float kMovementRangeY = 10.f; 	// In mm. 	//TODO: find this
+constexpr float kMovementRangeZ = 10.f; 	// In mm. 	//TODO: find this
+
 // GCodeInterpreter
 constexpr unsigned int kMaximumNumberOfParameters = 10;

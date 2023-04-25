@@ -103,11 +103,15 @@ public:
 		// ld4.high();
 
 		//set variables for stepping task
-		this->steps = steps;
-		stopping = false;
+		if (steps != 0) {
+			this->steps = steps;
+			stopping = false;
 
-		//set first step
-		initiateStepping();
+			//set first step
+			initiateStepping();
+		} else {
+			processManager.requestProcess(advertiseStopProcessRequest);
+		}
 	}
 
 	void stop() {

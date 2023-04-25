@@ -22,6 +22,10 @@ public:
 		return (computeIncrement(iWrite) != iRead);
 	}
 
+	bool isFull() const {
+		return !hasSpace();
+	}
+
 	bool isEmpty() const {
 		// Buffer is empty if reading index equals the writing index.
 		return (iRead == iWrite);
@@ -39,6 +43,13 @@ public:
 		for (unsigned int i=0; i < length; i++) {
 			write(data[i]);
 		}
+	}
+
+	Type peek() {
+		// Copy reference to data in buffer.
+		Type & ret = buffer[iRead];
+		// Return referenced data.
+		return ret;
 	}
 
 	Type read() {

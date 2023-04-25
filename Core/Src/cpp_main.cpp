@@ -15,6 +15,8 @@
 #include "GCodeInterpreter.h"
 #include "LineBuffer.h"
 
+#include <cstring>
+
 
 // #include "TimingTest0.h"
 // #include "TimingTest1.h"
@@ -22,8 +24,10 @@
 
 // TimingTest0<Platform> timingTest0(processManager, timingManager, ld3, ld6);
 // TimingTest1<Platform> timingTest1(ld3, ld6, steppingTaskTimer);
-GCodeInterpreter< T3Machine<Platform,M415C<Platform>,M415C<Platform>,DRV8825_MovementControl<Platform>> > gCodeInterpreter;
 LineBuffer<100> lineBuffer;
+GCodeInterpreter<Platform, T3Machine<Platform,M415C<Platform>,M415C<Platform>,DRV8825_MovementControl<Platform>> > gCodeInterpreter(processManager, t3Machine);
+
+
 
 void cpp_main(void) {
 	//init platform
@@ -85,7 +89,9 @@ void cpp_main(void) {
 	button_filter.setSubscriberFunction([](bool pinValue){if (pinValue) {t3Machine.startHoming();}});
 
 	vcom.setSubscriberFunction([](uint8_t data){lineBuffer.input(data);});
-	lineBuffer.setSubscriberFunction([](const char * line, uint32_t lineLength){vcom.transmit(reinterpret_cast<const uint8_t *>(line), lineLength);});
+	lineBuffer.setSubscriberFunction([](const char * line, uint32_t lineLength){gCodeInterpreter.input(line, lineLength);});
+	// lineBuffer.setSubscriberFunction([](const char * line, uint32_t lineLength){vcom.transmit(reinterpret_cast<const uint8_t *>(line), lineLength);});
+	gCodeInterpreter.setChannelToHost([](const char * nullTerminatedMessage) {vcom.transmit(reinterpret_cast<const uint8_t *>(nullTerminatedMessage), strlen(nullTerminatedMessage));});
 	// vcom.setSubscriberFunction([](uint8_t data){vcom.transmit(data);});
 
 

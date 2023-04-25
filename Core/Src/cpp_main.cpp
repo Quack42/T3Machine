@@ -13,6 +13,7 @@
 #include "Devices.h"
 
 #include "GCodeInterpreter.h"
+#include "LineBuffer.h"
 
 
 // #include "TimingTest0.h"
@@ -21,6 +22,8 @@
 
 // TimingTest0<Platform> timingTest0(processManager, timingManager, ld3, ld6);
 // TimingTest1<Platform> timingTest1(ld3, ld6, steppingTaskTimer);
+GCodeInterpreter< T3Machine<Platform,M415C<Platform>,M415C<Platform>,DRV8825_MovementControl<Platform>> > gCodeInterpreter;
+LineBuffer<100> lineBuffer;
 
 void cpp_main(void) {
 	//init platform
@@ -81,7 +84,10 @@ void cpp_main(void) {
 	// button_filter.setSubscriberFunction([](bool pinValue){if (pinValue) {t3Machine.startMoving();}});
 	button_filter.setSubscriberFunction([](bool pinValue){if (pinValue) {t3Machine.startHoming();}});
 
-	vcom.setSubscriberFunction([](uint8_t data){vcom.transmit(data);});
+	vcom.setSubscriberFunction([](uint8_t data){lineBuffer.input(data);});
+	lineBuffer.setSubscriberFunction([](const char * line, uint32_t lineLength){vcom.transmit(reinterpret_cast<const uint8_t *>(line), lineLength);});
+	// vcom.setSubscriberFunction([](uint8_t data){vcom.transmit(data);});
+
 
 	// button.setSubscriberFunction([](bool pinValue){button_filter.input(pinValue);});
 	// // button.setSubscriberFunction([](bool pinValue){timingTest0.input(pinValue);});

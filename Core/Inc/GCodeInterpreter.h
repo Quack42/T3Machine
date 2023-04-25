@@ -116,7 +116,9 @@ public:
 			}
 		}
 
-		convertParameters(command);
+		if (!convertParameters(command)) {
+			return false;
+		}
 
 		return ret;
 	}
@@ -289,7 +291,6 @@ private:
 	bool relativeMode = false;
 
 public:
-
 	//line : a gcode line without line-ending characters
 	void input(char * line, uint32_t lineLength) {
 		GCodeParse gCodeParse(line, lineLength);
@@ -300,6 +301,11 @@ public:
 		}
 
 		//
+		Command cmd;
+		if (!gCodeParse.generateCommand(&cmd)) {
+			//TODO: indicate something went wrong.
+			return;
+		}
 
 		// TODO: Acknowledge commands.
 		// https://reprap.org/wiki/G-code#Buffering

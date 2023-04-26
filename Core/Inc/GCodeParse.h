@@ -94,12 +94,17 @@ private:
 			// First read the identifier.
 			const char parameterIdentifier = parameterString.data[0];
 
+			bool negativeNumber = false;
+			if (parameterString.dataLength > 1 && parameterString.data[1] == '-') {
+				negativeNumber = true;
+			}
+
 			// Then read the parameter value.
 			float parameterValue = 0.0f;
 			bool decimalPointFound = false;
 			unsigned int digitsSinceDecimalPointFound = 0;
-			for (unsigned int i2=0; i2 < parameterString.dataLength-1; i2++) {
-				const char & parameterDigit = parameterString.data[1 + i2];
+			for (unsigned int i2=negativeNumber ? 2 : 1; i2 < parameterString.dataLength; i2++) {
+				const char & parameterDigit = parameterString.data[i2];
 				if (str_contains(kNumbers, parameterDigit)) {
 					if (!decimalPointFound) {
 						// Treat this number as if the decimal point has NOT been encountered yet.
@@ -132,6 +137,11 @@ private:
 					// Character found that was not a digit, nor a decimal point.
 					return false;
 				}
+			}
+
+			// Switch sign if there was an indication of a negative number
+			if (negativeNumber) {
+				parameterValue = -parameterValue;
 			}
 
 			// Store the parameter in the command.

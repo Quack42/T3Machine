@@ -2,6 +2,8 @@
 
 #include "TimeValue.h"
 
+#include <cstdint>
+
 constexpr TimeValue DefaultTimeToWait = TimeValue(0, 5000, 0); 	//5000ms
 
 constexpr float kButtonFuzzyFilterFlipTime = 100.f/0.7f;

@@ -7,6 +7,7 @@ enum GCode_e {
 	e_GBase = 0,
 	// -----
 	e_G0 = e_GBase + 0,
+	e_G1 = e_GBase + 1,
 	// -----
 	e_INVALID = -1
 };

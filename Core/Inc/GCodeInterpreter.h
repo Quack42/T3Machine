@@ -2,12 +2,15 @@
 
 #include "ProcessManager.h"
 #include "CyclicBuffer.h"
+#include "ProcessRequest.h"
+#include "SubscriberLL.h"
 
 #include "GCodeCommand.h"
 #include "GCodeParameter.h"
 #include "GCodeParse.h"
 
 #include <cstdint>
+#include <cstring>
 #include <functional>
 
 template<typename Platform, typename ControlledDevice>
@@ -19,9 +22,14 @@ private:
 
 	/// Components
 	CyclicBuffer<GCodeCommand, 10> queue;
+	GCodeCommand activeCommand;
+	bool hasActiveCommand = false;
 	ProcessRequest executeCommandProcessRequest;
 
-	std::function<void(const char*)> channelToHostFunction;
+	std::function<void(const char*, uint32_t)> channelToHostFunction;
+
+	Subscriber controlledDeviceIdleSubscription;
+
 
 public:
 	GCodeInterpreter(	ProcessManager<Platform> & processManager,
@@ -30,17 +38,23 @@ public:
 			processManager(processManager),
 			controlledDevice(controlledDevice),
 			// Components
-			executeCommandProcessRequest(std::bind(&GCodeInterpreter<Platform, ControlledDevice>::executeCommand, this))
+			executeCommandProcessRequest(std::bind(&GCodeInterpreter<Platform, ControlledDevice>::executeCommand, this)),
+			controlledDeviceIdleSubscription(std::bind(&GCodeInterpreter<Platform, ControlledDevice>::t3MachineIdleCallback, this))
 	{
 	}
 
-	void setChannelToHost(std::function<void(const char*)> channelToHostFunction) {
+	void init() {
+		controlledDevice.subscribeToIdle(&controlledDeviceIdleSubscription);
+	}
+
+	void setChannelToHost(std::function<void(const char*, uint32_t)> channelToHostFunction) {
 		this->channelToHostFunction = channelToHostFunction;
 	}
 
 	//line : a gcode line without line-ending characters
 	bool input(const char * line, uint32_t lineLength) {
 		if (!queue.hasSpace()) {
+			sendToHost("1\n", 2);
 			return false;
 		}
 
@@ -48,6 +62,7 @@ public:
 		// Parse.
 		if (!gCodeParse.parse()) {
 			//TODO: indicate something went wrong.
+			sendToHost("2\n", 2);
 			return false;
 		}
 
@@ -55,6 +70,7 @@ public:
 		GCodeCommand cmd;
 		if (!gCodeParse.generateCommand(&cmd)) {
 			//TODO: indicate something went wrong.
+			sendToHost("3\n", 2);
 			return false;
 		}
 
@@ -63,11 +79,13 @@ public:
 
 		// Acknowledge command if there is space for another.
 		if (queue.hasSpace()) {
-			sendToHost("ok");
+			sendToHost("ok\n");
 		}
 
 		// Initiate excecution.
-		processManager.requestProcess(executeCommandProcessRequest);
+		if (!queue.isEmpty()) {
+			processManager.requestProcess(executeCommandProcessRequest);
+		}
 
 		// // Execute.
 		// switch(cmd.getCode()) {
@@ -91,9 +109,45 @@ public:
 private:
 	void executeCommand() {
 		// TODO: If ready to execute.
+		if (!hasActiveCommand && !queue.isEmpty()) {
+			// Check if the buffer is full before we read from it.
+			bool queueIsFull = !queue.hasSpace();
+
+			// Get a command to execute.
+			activeCommand = queue.read();
+			hasActiveCommand = true;
+
+			// Make sure the host can keep the buffer full
+			if (queueIsFull && queue.hasSpace()) { 	//NOTE: queue.hasSpace() is redundant after queue.read().
+				// If the queue was full, but isn't anymore: let the host know.
+				sendToHost("ok\n");
+			}
+
+
+			// Initiate command.
+			switch(activeCommand.getCode()) {
+				case e_G0:
+				case e_G1:
+					g0_1(activeCommand);
+					break;
+				default:
+					//TODO: Indicate something went wrong.
+					return;
+			}
+		}
 	}
 
-	bool g0(GCodeCommand & cmd) {
+	void t3MachineIdleCallback() {
+		// Execution done.
+		hasActiveCommand = false;
+
+		// Initiate excecution.
+		if (!queue.isEmpty()) {
+			processManager.requestProcess(executeCommandProcessRequest);
+		}
+	}
+
+	bool g0_1(GCodeCommand & cmd) {
 		// https://marlinfw.org/docs/gcode/G000-G001.html
 		float movementE=0.0f;
 		float movementX=0.0f;
@@ -116,8 +170,8 @@ private:
 				case 'Y':
 					movementY = parameter.getValue();
 					break;
-				case 'Y':
-					movementY = parameter.getValue();
+				case 'Z':
+					movementZ = parameter.getValue();
 					break;
 				case 'E':
 					movementE = parameter.getValue();
@@ -148,9 +202,12 @@ private:
 		return controlledDevice.moveAbsolute(movementX, movementY, movementZ);
 	}
 
-	void sendToHost(const char * nullTerminatedMessage) {
+	void sendToHost(const char * msg, uint32_t msgLength) {
 		if (channelToHostFunction) {
-			channelToHostFunction(nullTerminatedMessage);
+			channelToHostFunction(msg, msgLength);
 		}
+	}
+	void sendToHost(const char * nullTerminatedMessage) {
+		sendToHost(nullTerminatedMessage, strlen(nullTerminatedMessage));
 	}
 };

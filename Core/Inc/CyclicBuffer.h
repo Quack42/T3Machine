@@ -17,14 +17,15 @@ public:
 	{
 	}
 
-	bool hasSpace() const {
+	bool isFull() const {
 		// The buffer is full if the increment of the writing index equals the reading index.
-		return (computeIncrement(iWrite) != iRead);
+		return (computeIncrement(iWrite) == iRead);
 	}
 
-	bool isFull() const {
-		return !hasSpace();
+	bool hasSpace() const {
+		return !isFull();
 	}
+
 
 	bool isEmpty() const {
 		// Buffer is empty if reading index equals the writing index.

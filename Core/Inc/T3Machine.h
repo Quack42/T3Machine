@@ -50,7 +50,7 @@ private:
 	Subscriber steppingTaskYStopSubscription;
 	Subscriber steppingTaskZStopSubscription;
 	
-	Subscriber * commandStoppedSubscriptionList = nullptr;
+	Subscriber * idleSubscriptionList = nullptr;
 
 
 public:
@@ -82,6 +82,10 @@ public:
 			steppingTaskYStopSubscription(std::bind(&T3Machine<Platform, DriverX, DriverY, DriverZ>::steppingTaskYStopped, this)),
 			steppingTaskZStopSubscription(std::bind(&T3Machine<Platform, DriverX, DriverY, DriverZ>::steppingTaskZStopped, this))
 	{
+	}
+
+	void subscribeToIdle(Subscriber * sub) {
+		Subscriber::addSubscription(sub, &idleSubscriptionList);
 	}
 
 	void init() {
@@ -119,7 +123,7 @@ public:
 		targetPosition = Vector3f(x,y,z);
 
 		// Set target position
-		Vector3i stepsToTake = calculateTargetStepOffset() - calculateCurrentPosition();
+		Vector3i stepsToTake = calculateTargetStepOffset() - stepOffset;
 
 		//TODO: set steppingTask* time
 		// 50-50 split time per step.
@@ -139,7 +143,23 @@ public:
 		return true;
 	}
 
+	bool isIdle() {
+		return (!steppingTask_X.isActive() && !steppingTask_Y.isActive() && !steppingTask_Z.isActive());
+	}
+
 private:
+
+	void advertiseIdle() {
+		/// Advertise
+		while (idleSubscriptionList != nullptr) {
+			//first remove first from list
+			Subscriber * current = idleSubscriptionList;
+			idleSubscriptionList = idleSubscriptionList->getNext();
+			//then add to process managers to-call list.
+			processManager.requestProcess(current->getProcessRequest());
+		}
+	}
+
 	void emergencyStop() {
 		//TODO: halt behaviors
 		steppingTask_X.stop();
@@ -165,8 +185,8 @@ private:
 	}
 
 	void steppingTaskStopped() {
-		if (!steppingTask_X.isActive() && !steppingTask_Y.isActive() && !steppingTask_Z.isActive()) {
-
+		if (isIdle()) {
+			advertiseIdle();
 		}
 	}
 

@@ -15,9 +15,6 @@
 #include "GCodeInterpreter.h"
 #include "LineBuffer.h"
 
-#include <cstring>
-
-
 // #include "TimingTest0.h"
 // #include "TimingTest1.h"
 
@@ -30,10 +27,10 @@ GCodeInterpreter<Platform, T3Machine<Platform,M415C<Platform>,M415C<Platform>,DR
 
 
 void cpp_main(void) {
-	//init platform
+	// Initialize platform.
 	timingManager.init();
 
-	//init pins
+	// Initialize pins.
 	stepPin_X.init(GPIO_PIN_SET);
 	directionPin_X.init(GPIO_PIN_SET);
 	stepPin_Y.init(GPIO_PIN_SET);
@@ -49,30 +46,33 @@ void cpp_main(void) {
 	sensor_Y.init();
 	sensor_Z.init();
 
-	//init filters
+	// Initialize filters.
 	button_filter.init(button.getValue());
 	sensor_X_filter.init(sensor_X.getValue());
 	sensor_Y_filter.init(sensor_Y.getValue());
 	sensor_Z_filter.init(sensor_Z.getValue());
 	// sensor_X_filter.init(sensor_X.getValue());
 
-	//init devices
+	// Initialize devices.
 	m415c_X.init();
 	m415c_Y.init();
 	drv8825_Z.init();
 
 	t3Machine.init();
 
-	//init timers
+	// Initialize data channels.
+	gCodeInterpreter.init();
+
+	// Initialize timers.
 	steppingTaskXTimer.init();
 	steppingTaskYTimer.init();
 	steppingTaskZTimer.init();
 
-	//init tests
+	// Initialize tests.
 	// timingTest1.init();
 
 	////////////////////////
-	// Setup data connections
+	// Setup data connections.
 
 	sensor_X.setSubscriberFunction([](bool pinValue){sensor_X_filter.input(pinValue);});
 	sensor_X_filter.setSubscriberFunction([](bool pinValue){t3Machine.input_sensorX(!pinValue);}); 	//NOTE: '!' because sensor is active low
@@ -89,9 +89,13 @@ void cpp_main(void) {
 	button_filter.setSubscriberFunction([](bool pinValue){if (pinValue) {t3Machine.startHoming();}});
 
 	vcom.setSubscriberFunction([](uint8_t data){lineBuffer.input(data);});
-	lineBuffer.setSubscriberFunction([](const char * line, uint32_t lineLength){gCodeInterpreter.input(line, lineLength);});
+	lineBuffer.setSubscriberFunction([](const char * line, uint32_t lineLength){
+			// vcom.transmit(reinterpret_cast<const uint8_t *>(line), lineLength);
+			// vcom.transmit(reinterpret_cast<const uint8_t *>("\n"), 1);
+			gCodeInterpreter.input(line, lineLength);
+	});
 	// lineBuffer.setSubscriberFunction([](const char * line, uint32_t lineLength){vcom.transmit(reinterpret_cast<const uint8_t *>(line), lineLength);});
-	gCodeInterpreter.setChannelToHost([](const char * nullTerminatedMessage) {vcom.transmit(reinterpret_cast<const uint8_t *>(nullTerminatedMessage), strlen(nullTerminatedMessage));});
+	gCodeInterpreter.setChannelToHost([](const char * msg, uint32_t length) {vcom.transmit(reinterpret_cast<const uint8_t *>(msg), length);});
 	// vcom.setSubscriberFunction([](uint8_t data){vcom.transmit(data);});
 
 

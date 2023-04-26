@@ -5,6 +5,7 @@
 #include "stringUtil.h"
 
 #include <cstdint>
+#include <cmath>
 
 class GCodeParse {
 private:
@@ -28,12 +29,10 @@ public:
 	}
 
 	bool parse() {
+		// Return false on invalid structure.
 		parameterStringListLength = 0;
 
-		//return false on invalid structure
-		if (!skipWhiteSpaceCharacters()) {
-			return false;
-		}
+		skipWhiteSpaceCharacters();
 
 		if (!parseGCodeCode()){
 			return false;
@@ -47,7 +46,6 @@ public:
 	}
 
 	bool generateCommand(GCodeCommand * command) {
-		bool ret = false;
 		if (command == nullptr) {
 			return false;
 		}
@@ -62,7 +60,7 @@ public:
 			return false;
 		}
 
-		return ret;
+		return true;
 	}
 
 private:
@@ -101,8 +99,8 @@ private:
 			bool decimalPointFound = false;
 			unsigned int digitsSinceDecimalPointFound = 0;
 			for (unsigned int i2=0; i2 < parameterString.dataLength-1; i2++) {
-				if (!str_contains(kNumbers, gCodeCodeString.data[1+i])) {
-					const char & parameterDigit = parameterString.data[1 + i2];
+				const char & parameterDigit = parameterString.data[1 + i2];
+				if (str_contains(kNumbers, parameterDigit)) {
 					if (!decimalPointFound) {
 						// Treat this number as if the decimal point has NOT been encountered yet.
 						// Shift everything up 1 digit.
@@ -122,7 +120,7 @@ private:
 						// Increment number of digits encountered since decimal point has been found.
 						digitsSinceDecimalPointFound++;
 					}
-				} else if (!str_contains(kDecimalPoint, gCodeCodeString.data[1+i])) {
+				} else if (str_contains(kDecimalPoint, parameterDigit)) {
 					if (decimalPointFound) {
 						// Found a second decimal point, parameter is faulty.
 						return false;
@@ -207,7 +205,7 @@ private:
 			// Skip until we find a white space character (or until the string ends), marking the end of the parameter.
 			skipUntilWhiteSpaceCharacters();
 			// Store end of parameter string.
-			gCodeCodeString.dataLength = (dataToParse - parameterStringList[parameterStringListLength].data);
+			parameterStringList[parameterStringListLength].dataLength = (dataToParse - parameterStringList[parameterStringListLength].data);
 			// Indicate the number of parameters have grown by 1.
 			parameterStringListLength++;
 			

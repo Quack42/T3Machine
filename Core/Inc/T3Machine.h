@@ -31,10 +31,15 @@ private:
 	} state_e = e_idle;
 
 	// Current location, in steps
-	Vector3i stepOffset;
+	Vector3i absoluteStepPosition;
+	int absoluteStepPositionExtruder;
+
+	Vector3f offset;
+	float offsetExtruder;
 
 	// The desired location in offset from 0; doesn't always perfectly match 'step*' variables, so we need to remember it in case of relative positioning.
 	Vector3f targetPosition;
+	float targetExtruder;
 
 	/// Components
 	// Tasks
@@ -69,14 +74,17 @@ public:
 			driverY(driverY),
 			driverZ(driverZ),
 			state_e(e_idle),
-			stepOffset(),
-			targetPosition(),
-			steppingTask_X(processManager, timingManager, steppingTaskXTimer, driverX, stepOffset.getRefX()),
-			steppingTask_Y(processManager, timingManager, steppingTaskYTimer, driverY, stepOffset.getRefY()),
-			steppingTask_Z(processManager, timingManager, steppingTaskZTimer, driverZ, stepOffset.getRefZ()),
-			homingAxisTask_X(processManager, steppingTask_X, stepOffset.getRefX()),
-			homingAxisTask_Y(processManager, steppingTask_Y, stepOffset.getRefY()),
-			homingAxisTask_Z(processManager, steppingTask_Z, stepOffset.getRefZ()),
+			absoluteStepPosition(0,0,0),
+			offset(0,0,0),
+			offsetExtruder(0),
+			targetPosition(0,0,0),
+			targetExtruder(0),
+			steppingTask_X('X', processManager, timingManager, steppingTaskXTimer, driverX, absoluteStepPosition.getRefX()),
+			steppingTask_Y('Y', processManager, timingManager, steppingTaskYTimer, driverY, absoluteStepPosition.getRefY()),
+			steppingTask_Z('Z', processManager, timingManager, steppingTaskZTimer, driverZ, absoluteStepPosition.getRefZ()),
+			homingAxisTask_X(processManager, steppingTask_X, absoluteStepPosition.getRefX()),
+			homingAxisTask_Y(processManager, steppingTask_Y, absoluteStepPosition.getRefY()),
+			homingAxisTask_Z(processManager, steppingTask_Z, absoluteStepPosition.getRefZ()),
 			homingTask(homingAxisTask_X, homingAxisTask_Y, homingAxisTask_Z),
 			steppingTaskXStopSubscription(std::bind(&T3Machine<Platform, DriverX, DriverY, DriverZ>::steppingTaskXStopped, this)),
 			steppingTaskYStopSubscription(std::bind(&T3Machine<Platform, DriverX, DriverY, DriverZ>::steppingTaskYStopped, this)),
@@ -96,7 +104,7 @@ public:
 	}
 
 	void startHoming() {
-		homingTask.start();
+		homingTask.start(true, true, false); 	//TODO: homeZ should be true, but currently the motor driver is burnt out.
 	}
 
 	void startMoving() {
@@ -115,15 +123,112 @@ public:
 		homingTask.input_sensorZ(sensorXValue);
 	}
 
-	bool moveAbsolute(float x, float y, float z) {
-		//TODO: Throw a tantrum if target position is out of bounds.
+	// GCode called functions
+	void setRelativePositioning(bool relativePositioning) {
+		this->relativePositioning = relativePositioning;
+	}
+
+	void setNewEPosition(float newEPosition) {
+		offsetExtruder = newEPosition;
+	}
+	void setNewXPosition(float newXPosition) {
+		offset.x = newXPosition;
+	}
+	void setNewYPosition(float newYPosition) {
+		offset.y = newYPosition;
+	}
+	void setNewZPosition(float newZPosition) {
+		offset.z = newZPosition;
+	}
+
+
+	bool homingSequence(bool homeX, bool homeY, bool homeZ) {
+		return homingTask.start(homeX, homeY, homeZ);
+	}
+
+	bool moveRelativeLinear(bool moveX, float x, bool moveY, float y, bool moveZ, float z) {
+		DEBUG_VCOM("REL-MOVE\n");
+		// Calculate absolute position based on relative coordinates.
+		Vector3f newTargetPosition = targetPosition + Vector3f(x,y,z);
+		
+		// Call moveAbsolute with those coordinates.
+		return moveAbsoluteLinear(moveX, newTargetPosition.x, moveY, newTargetPosition.y, moveZ, newTargetPosition.z);
+	}
+
+	bool moveAbsoluteLinear(bool moveX, float x, bool moveY, float y, bool moveZ, float z) {
+		//TODO: Throw a tantrum if target position is out of bounds. Also consider moveX/Y/Z booleans.
 		//TODO: Throw a tantrum if steppingTasks aren't done.
 		
 		// Set target position; needs to be done first.
-		targetPosition = Vector3f(x,y,z);
+		targetPosition = Vector3f(
+				moveX ? x : targetPosition.x,
+				moveY ? y : targetPosition.y,
+				moveZ ? z : targetPosition.z);
 
-		// Set target position
-		Vector3i stepsToTake = calculateTargetStepOffset() - stepOffset;
+		// Set target position.
+		Vector3i stepsToTake = calculateTargetStepOffset() - absoluteStepPosition;
+
+		{
+			int stepsToTakeX = stepsToTake.x;
+			bool negative = false;
+			if (stepsToTakeX < 0) {
+				stepsToTakeX *= -1;
+				negative = true;
+			}
+			char buffer[] = "T3:stepsToTake.x:[      0][M]\n";
+			int i = 0;
+			while (stepsToTakeX) {
+				buffer[24-i] = '0' + (stepsToTakeX % 10);
+				stepsToTakeX /= 10;
+				i++;
+			}
+			if (negative) {
+				buffer[24-i] = '-';
+			}
+			buffer[27] = '0' + moveX;
+			debug(buffer, sizeof("T3:stepsToTake.x:[       ][M]\n")-1);
+		}
+		{
+			int stepsToTakeY = stepsToTake.y;
+			bool negative = false;
+			if (stepsToTakeY < 0) {
+				stepsToTakeY *= -1;
+				negative = true;
+			}
+			char buffer[] = "T3:stepsToTake.y:[      0][M]\n";
+			int i = 0;
+			while (stepsToTakeY) {
+				buffer[24-i] = '0' + (stepsToTakeY % 10);
+				stepsToTakeY /= 10;
+				i++;
+			}
+			if (negative) {
+				buffer[24-i] = '-';
+			}
+			buffer[27] = '0' + moveY;
+			debug(buffer, sizeof("T3:stepsToTake.y:[       ][M]\n")-1);
+		}
+		{
+			int stepsToTakeZ = stepsToTake.z;
+			bool negative = false;
+			if (stepsToTakeZ < 0) {
+				stepsToTakeZ *= -1;
+				negative = true;
+			}
+			char buffer[] = "T3:stepsToTake.z:[      0][M]\n";
+			int i = 0;
+			while (stepsToTakeZ) {
+				buffer[24-i] = '0' + (stepsToTakeZ % 10);
+				stepsToTakeZ /= 10;
+				i++;
+			}
+			if (negative) {
+				buffer[24-i] = '-';
+			}
+			buffer[27] = '0' + moveZ;
+			debug(buffer, sizeof("T3:stepsToTake.z:[       ][M]\n")-1);
+		}
+
 
 		//TODO: set steppingTask* time
 		// 50-50 split time per step.
@@ -150,6 +255,8 @@ public:
 private:
 
 	void advertiseIdle() {
+		debug("T3->idle\n", sizeof("T3->idle\n")-1);
+
 		/// Advertise
 		while (idleSubscriptionList != nullptr) {
 			//first remove first from list
@@ -172,9 +279,9 @@ private:
 
 
 	Vector3f calculateCurrentPosition() const {
-		return Vector3f( kMMPerTickXAxis * stepOffset.x,
-						 kMMPerTickYAxis * stepOffset.y,
-						 kMMPerTickZAxis * stepOffset.z );
+		return Vector3f( kMMPerTickXAxis * absoluteStepPosition.x,
+						 kMMPerTickYAxis * absoluteStepPosition.y,
+						 kMMPerTickZAxis * absoluteStepPosition.z );
 	}
 
 	Vector3i calculateTargetStepOffset() const {
@@ -185,6 +292,8 @@ private:
 	}
 
 	void steppingTaskStopped() {
+		debug("T3:stepStopped\n", sizeof("T3:stepStopped\n")-1);
+
 		if (isIdle()) {
 			advertiseIdle();
 		}

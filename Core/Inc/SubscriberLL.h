@@ -33,7 +33,7 @@ public:
 			if (current == sub) {
 				return true;
 			}
-			current->getNext();
+			current = current->getNext();
 		}
 		return false;
 	}

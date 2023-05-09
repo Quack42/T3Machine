@@ -7,9 +7,9 @@
 template<typename Type, int BufferSize>
 class CyclicBuffer {
 private:
-	Type buffer[BufferSize];
-	unsigned int iWrite;
-	unsigned int iRead;
+	Type buffer[BufferSize+1];
+	unsigned int iWrite=0;
+	unsigned int iRead=0;
 public:
 	CyclicBuffer() :
 			iWrite(0),
@@ -77,7 +77,7 @@ public:
 		// Compute the length of unread data.
 		unsigned int unreadLength = computeUnreadLength();
 		// Compute the distance between the reading index and the end of the raw buffer.
-		unsigned int lengthTillEndOfRawBuffer = (BufferSize - iRead); 	//This assumes that the reading index is always of a lower value than the BufferSize (which it should be).
+		unsigned int lengthTillEndOfRawBuffer = (BufferSize + 1 - iRead); 	//This assumes that the reading index is always of a lower value than the BufferSize (which it should be).
 		// Return the lowest value
 		return std::min(unreadLength, lengthTillEndOfRawBuffer);
 	}
@@ -89,7 +89,7 @@ public:
 	unsigned int computeUnreadLength() {
 		unsigned int ret=0;
 		if (iWrite < iRead) {
-			ret = iWrite + BufferSize - iRead;
+			ret = iWrite + BufferSize + 1 - iRead;
 		} else {
 			ret = iWrite - iRead;
 		}
@@ -97,7 +97,7 @@ public:
 	}
 
 	unsigned int computeFreeSpace() {
-		return (BufferSize - computeUnreadLength());
+		return (BufferSize + 1 - 1 - computeUnreadLength());
 	}
 
 private:
@@ -105,7 +105,7 @@ private:
 		// Increment
 		index += increment;
 		// Loop if necessary
-		index %= BufferSize;
+		index %= (BufferSize+1);
 		// Return
 		return index;
 	}

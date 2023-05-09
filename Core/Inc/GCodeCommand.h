@@ -6,8 +6,12 @@
 enum GCode_e {
 	e_GBase = 0,
 	// -----
-	e_G0 = e_GBase + 0,
-	e_G1 = e_GBase + 1,
+	e_G0 = e_GBase + 0, 		// Non-extrude linear move. 	https://marlinfw.org/docs/gcode/G000-G001.html
+	e_G1 = e_GBase + 1, 		// Extrude Linear move. 		https://marlinfw.org/docs/gcode/G000-G001.html
+	e_G28 = e_GBase + 28, 		// Auto home. 					https://marlinfw.org/docs/gcode/G028.html
+	e_G90 = e_GBase + 90, 		// Absolute Positioning. 		https://marlinfw.org/docs/gcode/G090.html
+	e_G91 = e_GBase + 91, 		// Relative Positioning. 		https://marlinfw.org/docs/gcode/G091.html
+	e_G92 = e_GBase + 92, 		// Set Position. 				https://marlinfw.org/docs/gcode/G092.html
 	// -----
 	e_INVALID = -1
 };

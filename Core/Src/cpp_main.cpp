@@ -25,6 +25,16 @@ LineBuffer<100> lineBuffer;
 GCodeInterpreter<Platform, T3Machine<Platform,M415C<Platform>,M415C<Platform>,DRV8825_MovementControl<Platform>> > gCodeInterpreter(processManager, t3Machine);
 
 
+void debug(const char * msg, unsigned int msgLength, bool addNewLine) {
+	if (kDebugMode) {
+		vcom.transmit(reinterpret_cast<const uint8_t*>("DEBUG"), /*strlen("DEBUG")*/ 5);
+		vcom.transmit(reinterpret_cast<const uint8_t*>(msg), msgLength);
+		if (addNewLine) {
+			vcom.transmit(reinterpret_cast<const uint8_t*>("\n"), 1);
+		}
+	}
+}
+
 
 void cpp_main(void) {
 	// Initialize platform.
@@ -74,6 +84,11 @@ void cpp_main(void) {
 	////////////////////////
 	// Setup data connections.
 
+	//TODO: Continue here: 3 things go wrong:
+	// (1) The first received command keeps getting repeated over and over.
+	// (2) hasActiveCommand magically reverts back to false.
+	// (3) steppingTask_Z never finishes.
+
 	sensor_X.setSubscriberFunction([](bool pinValue){sensor_X_filter.input(pinValue);});
 	sensor_X_filter.setSubscriberFunction([](bool pinValue){t3Machine.input_sensorX(!pinValue);}); 	//NOTE: '!' because sensor is active low
 
@@ -88,10 +103,12 @@ void cpp_main(void) {
 	// button_filter.setSubscriberFunction([](bool pinValue){if (pinValue) {t3Machine.startMoving();}});
 	button_filter.setSubscriberFunction([](bool pinValue){if (pinValue) {t3Machine.startHoming();}});
 
-	vcom.setSubscriberFunction([](uint8_t data){lineBuffer.input(data);});
+	vcom.setSubscriberFunction([](uint8_t data){
+			// debug((char*)&data, 1, true);
+			lineBuffer.input(data);
+	});
 	lineBuffer.setSubscriberFunction([](const char * line, uint32_t lineLength){
-			// vcom.transmit(reinterpret_cast<const uint8_t *>(line), lineLength);
-			// vcom.transmit(reinterpret_cast<const uint8_t *>("\n"), 1);
+			debug(line, lineLength, true);
 			gCodeInterpreter.input(line, lineLength);
 	});
 	// lineBuffer.setSubscriberFunction([](const char * line, uint32_t lineLength){vcom.transmit(reinterpret_cast<const uint8_t *>(line), lineLength);});

@@ -6,21 +6,26 @@
 #include "ProcessRequest.h"
 #include "SubscriberLL.h"
 
+#include "logging.h"
+
 #include <functional>
 
-// #include "MyGPIO.h" 	//TODO: REMOVE THIS
-// #include "PlatformSelection.h" 	//TODO: REMOVE THIS
-// extern OutputPin<Platform> ld6; 	//blue 	//TODO: REMOVE THIS
-// extern OutputPin<Platform> ld5; 	//red 	//TODO: REMOVE THIS
-// extern OutputPin<Platform> ld4; 	//grn 	//TODO: REMOVE THIS
-// extern OutputPin<Platform> ld3; 	//ora 	//TODO: REMOVE THIS
+#include "MyGPIO.h" 	//TODO: REMOVE THIS
+#include "PlatformSelection.h" 	//TODO: REMOVE THIS
+extern OutputPin<Platform> ld6; 	//blue 	//TODO: REMOVE THIS
+extern OutputPin<Platform> ld5; 	//red 	//TODO: REMOVE THIS
+extern OutputPin<Platform> ld4; 	//grn 	//TODO: REMOVE THIS
+extern OutputPin<Platform> ld3; 	//ora 	//TODO: REMOVE THIS
 
 template<typename Driver, typename Platform>
 class SteppingTask {
 private:
-	// Constants
+	// Static Constants
 	constexpr static float kDefaultStepHighTime = 1.5f;
 	constexpr static float kDefaultStepLowTime = 1.5f;
+	
+	// Member Constants
+	const char identifier;
 
 	// References
 	ProcessManager<Platform> & processManager;
@@ -48,13 +53,16 @@ private:
 	Subscriber * stoppedSubscriberList = nullptr;
 
 public:
-	SteppingTask(	ProcessManager<Platform> & processManager,
+	SteppingTask(	const char identifier,
+					ProcessManager<Platform> & processManager,
 					TimingManager<Platform> & timingManager,
 					Timer<Platform> & timer,
 					Driver & driver,
 					int & positionIndex,
 					float stepHighTime = kDefaultStepHighTime,
 					float stepLowTime = kDefaultStepLowTime) :
+			// Constants
+			identifier(identifier),
 			// References
 			processManager(processManager),
 			timingManager(timingManager),
@@ -100,6 +108,10 @@ public:
 			return;
 		}
 
+		char buffer[] = "Step[*] -> start\n";
+		buffer[5] = identifier;
+		debug(buffer, sizeof("Step[*] -> start\n")-1);
+
 		// ld4.high();
 
 		//set variables for stepping task
@@ -122,10 +134,24 @@ private:
 	void timerISR() {
 		if (state == e_toStepHigh) {
 			stepHighISR();
+			if (identifier == 'Z') {
+				ld3.low();
+				ld5.high();
+				ld4.low();
+			}
 		} else if(state == e_toStepLow) {
 			stepLowISR();
+			if (identifier == 'Z') {
+				ld3.low();
+				ld4.high();
+				ld5.low();
+			}
 		} else if(state == e_toIdle) {
-			// ld6.high();
+			if (identifier == 'Z') {
+				ld3.high();
+				ld4.low();
+				ld5.low();
+			}
 			state = e_idle;
 			processManager.requestProcess(advertiseStopProcessRequest);
 		}
@@ -187,6 +213,10 @@ private:
 	}
 
 	void advertiseStop() {
+		char buffer[] = "Step[*] -> stop\n";
+		buffer[5] = identifier;
+		debug(buffer, sizeof("Step[*] -> stop\n")-1);
+
 		/// Advertise
 		while (stoppedSubscriberList != nullptr) {
 			//first remove first from list

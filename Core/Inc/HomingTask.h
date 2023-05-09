@@ -31,6 +31,9 @@ private:
 		e_homingZ,
 		e_done
 	} state_e;
+	bool homeX;
+	bool homeY;
+	bool homeZ;
 
 public:
 	HomingTask(	HomingAxisTask<DriverX, Platform> & homingAxisTask_X,
@@ -53,11 +56,15 @@ public:
 		homingAxisTask_Z.subscribeToStop(&homingAxisTaskZStoppedSubscription);
 	}
 
-	void start() {
+	bool start(bool homeX, bool homeY, bool homeZ) {
 		if (state_e == e_idle || state_e == e_done) {
+			this->homeX = homeX;
+			this->homeY = homeY;
+			this->homeZ = homeZ;
 			stateSwitch_toHomingX();
+			return true;
 		} else {
-			//TODO: fill this.
+			return false;
 		}
 	}
 
@@ -94,11 +101,15 @@ private:
 	/// -- State functions -- ///
 
 	void stateSwitch_toHomingX() {
-		state_e = e_homingX;
-		ld3.high();
-		ld5.low();
-		ld6.low();
-		homingAxisTask_X.start();
+		if (homeX) {
+			state_e = e_homingX;
+			ld3.high();
+			ld5.low();
+			ld6.low();
+			homingAxisTask_X.start();
+		} else {
+			stateSwitch_toHomingY();
+		}
 	}
 
 	void state_homingX() {
@@ -108,11 +119,15 @@ private:
 	}
 
 	void stateSwitch_toHomingY() {
-		state_e = e_homingY;
-		ld3.low();
-		ld5.high();
-		ld6.low();
-		homingAxisTask_Y.start();
+		if (homeY) {
+			state_e = e_homingY;
+			ld3.low();
+			ld5.high();
+			ld6.low();
+			homingAxisTask_Y.start();
+		} else {
+			stateSwitch_toHomingZ();
+		}
 	}
 
 	void state_homingY() {
@@ -122,11 +137,15 @@ private:
 	}
 
 	void stateSwitch_toHomingZ() {
-		state_e = e_homingZ;
-		ld3.low();
-		ld5.low();
-		ld6.high();
-		homingAxisTask_Z.start();
+		if (homeZ) {
+			state_e = e_homingZ;
+			ld3.low();
+			ld5.low();
+			ld6.high();
+			homingAxisTask_Z.start();
+		} else {
+			stateSwitch_toDone();
+		}
 	}
 
 	void state_homingZ() {

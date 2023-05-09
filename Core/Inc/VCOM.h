@@ -5,6 +5,7 @@
 #include "ProcessManager.h"
 #include "CyclicBuffer.h"
 #include "ProcessRequest.h"
+#include "logging.h"
 
 #include <functional>
 #include <cstdint>
@@ -58,12 +59,25 @@ public:
 	}
 
 	unsigned int transmit(const uint8_t * data, unsigned int dataLength) {
+		// while (dataLength > 0) {
+		// 	unsigned int freeSpace = std::min(dataLength, txBuffer.computeFreeSpace());
+		// 	txBuffer.write(data, freeSpace);
+		// 	data += freeSpace;
+		// 	dataLength -= freeSpace;
+		// 	if (transmittingDataLength == 0) {
+		// 		transmissionLogic();
+		// 	}
+		// }
 		unsigned int ret=0;
 		if (txBuffer.computeFreeSpace() < dataLength) {
-			// Cannot buffer all data.. 
+			// Cannot buffer all data..
+			unsigned int toTransmit = std::min(dataLength, txBuffer.computeFreeSpace());
+			txBuffer.write(data, toTransmit);
+			ret = toTransmit;
 		} else {
 			// Buffer all data
 			txBuffer.write(data, dataLength);
+			ret = dataLength;
 		}
 
 		// Trigger transmission process.
@@ -92,6 +106,7 @@ public:
 		} else {
 			//not enough free space
 		}
+
 		processManager.requestProcess(conveyRXDataProcess);
 	}
 
@@ -106,14 +121,28 @@ private:
 	}
 
 	void transmissionLogic() {
-		// Get data to transmit.
-		uint8_t * dataToTransmit = txBuffer.getReadingPointerToRawData();
-		// Get the length of the data to transmit.
-		uint32_t lengthOfDataToTransmit = txBuffer.getConsecutiveLength();
-		// Queue it for transmission via platform specific function.
-		uint32_t queuedBytesForTransmission = vcomTXInterface._startTransmission(dataToTransmit, lengthOfDataToTransmit);
-		// Remember how much data we've queued. We can only clear it after transmission has finished (the transmission process might use the provided buffer).
-		transmittingDataLength = queuedBytesForTransmission;
+		if (transmittingDataLength == 0) {
+			// Get data to transmit.
+			uint8_t * dataToTransmit = txBuffer.getReadingPointerToRawData();
+			// Get the length of the data to transmit.
+			uint32_t lengthOfDataToTransmit = txBuffer.getConsecutiveLength();
+			// Queue it for transmission via platform specific function.
+			uint32_t queuedBytesForTransmission = vcomTXInterface._startTransmission(dataToTransmit, lengthOfDataToTransmit);
+			// Remember how much data we've queued. We can only clear it after transmission has finished (the transmission process might use the provided buffer).
+			if (queuedBytesForTransmission > 0) {
+				transmittingDataLength = queuedBytesForTransmission;
+			}
+
+			if (queuedBytesForTransmission == 0) {
+				// Transmission process is busy, retry.
+				processManager.requestProcess(transmitTXDataProcess);
+			}
+		} else {
+			// Already busy with transmission; try again later if needed.
+			if (!txBuffer.isEmpty()) {
+				processManager.requestProcess(transmitTXDataProcess);
+			}
+		}
 	}
 
 };

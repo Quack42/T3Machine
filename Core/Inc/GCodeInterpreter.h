@@ -115,7 +115,44 @@ private:
 				sendToHost("ok\n");
 			}
 
+			// Print which command we're executing
+			{
+				char buffer[100] = "Executing: ";
+				GCode_e code = activeCommand.getCode();
+				int codeNumber = 0;
+				int i = sizeof("Executing: ")-1;
+				if (code >= e_GMin && code <= e_GMax) {
+					// Write the GCode identifier character into the buffer.
+					buffer[i] = 'G';
+					i++;
+					// Compute the codeNumber.
+					codeNumber = code - e_GBase;
+				}
 
+				// Write the codeNumber value into the buffer.
+				i += int_to_str(&buffer[i], sizeof(buffer)-i-1, codeNumber);
+
+				// Add space
+				buffer[i] = ' ';
+				i++;
+
+				// Handle parameters
+				GCodeParameter * parameterList = activeCommand.getParameterList();
+				unsigned int parameterListLength = activeCommand.getParameterListLength();
+				for (unsigned int i2=0; i2 < parameterListLength; i2++) {
+					buffer[i] = parameterList[i2].getIdentifier();
+					i++;
+					i += float_to_str(&buffer[i], sizeof(buffer)-i-1, parameterList[i2].getValue());
+					buffer[i] = ' ';
+					i++;
+				}
+
+				buffer[i] = '\n';
+				i++;
+
+				debug(buffer, i);
+
+			}
 			// Initiate command.
 			switch(activeCommand.getCode()) {
 				case e_G0:
@@ -150,8 +187,8 @@ private:
 		// Re-register
 		controlledDevice.subscribeToIdle(&controlledDeviceIdleSubscription);
 
-		// DEBUG_VCOM("GCI:T3Idle\n");
 		debug("GCI:T3Idle\n", sizeof("GCI:T3Idle\n")-1);
+
 		// Execution done.
 		hasActiveCommand = false;
 

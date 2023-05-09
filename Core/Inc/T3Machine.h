@@ -255,8 +255,6 @@ public:
 private:
 
 	void advertiseIdle() {
-		debug("T3->idle\n", sizeof("T3->idle\n")-1);
-
 		/// Advertise
 		while (idleSubscriptionList != nullptr) {
 			//first remove first from list
@@ -292,8 +290,6 @@ private:
 	}
 
 	void steppingTaskStopped() {
-		debug("T3:stepStopped\n", sizeof("T3:stepStopped\n")-1);
-
 		if (isIdle()) {
 			advertiseIdle();
 		}

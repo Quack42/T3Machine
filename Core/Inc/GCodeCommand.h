@@ -13,7 +13,9 @@ enum GCode_e {
 	e_G91 = e_GBase + 91, 		// Relative Positioning. 		https://marlinfw.org/docs/gcode/G091.html
 	e_G92 = e_GBase + 92, 		// Set Position. 				https://marlinfw.org/docs/gcode/G092.html
 	// -----
-	e_INVALID = -1
+	e_INVALID = -1,
+	e_GMin = e_G0,
+	e_GMax = e_G92
 };
 
 

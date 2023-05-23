@@ -16,6 +16,8 @@ extern PinIdentifier<Platform> directionPin_X_pinIdentifier;
 extern PinIdentifier<Platform> directionPin_Y_pinIdentifier;
 extern PinIdentifier<Platform> directionPin_Z_pinIdentifier;
 
+extern PinIdentifier<Platform> dcMotorPin_pinIdentifier;
+
 //inputs
 extern PinIdentifier<Platform> button_pinIdentifier;
 extern PinIdentifier<Platform> sensor_X_pinIdentifier;

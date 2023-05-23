@@ -10,12 +10,6 @@
 
 #include <functional>
 
-#include "MyGPIO.h" 	//TODO: REMOVE THIS
-#include "PlatformSelection.h" 	//TODO: REMOVE THIS
-extern OutputPin<Platform> ld6; 	//blue 	//TODO: REMOVE THIS
-extern OutputPin<Platform> ld5; 	//red 	//TODO: REMOVE THIS
-extern OutputPin<Platform> ld4; 	//grn 	//TODO: REMOVE THIS
-extern OutputPin<Platform> ld3; 	//ora 	//TODO: REMOVE THIS
 
 template<typename Driver, typename Platform>
 class SteppingTask {
@@ -71,7 +65,6 @@ public:
 			positionIndex(positionIndex),
 			// Components
 			advertiseStopProcessRequest(std::bind(&SteppingTask<Driver, Platform>::advertiseStop, this)),
-			// steppingControlTimedTask(std::bind(&SteppingTask<Driver, Platform>::steppingControl, this), TimeValue(stepHighTime)),
 			// Variables
 			stepHighTime(stepHighTime),
 			stepLowTime(stepLowTime),
@@ -104,7 +97,7 @@ public:
 
 	void startSteppingTask(int steps) {
 		if (state != e_idle) {
-			//assumes we checked the task was actually done stepping before we called this.
+			// Assumes we checked the task was actually done stepping before we called this.
 			return;
 		}
 
@@ -112,14 +105,12 @@ public:
 		buffer[5] = identifier;
 		debug(buffer, sizeof("Step[*] -> start\n")-1);
 
-		// ld4.high();
-
-		//set variables for stepping task
+		// Set variables for stepping task.
 		if (steps != 0) {
 			this->steps = steps;
 			stopping = false;
 
-			//set first step
+			// Set first step.
 			initiateStepping();
 		} else {
 			processManager.requestProcess(advertiseStopProcessRequest);
@@ -134,24 +125,9 @@ private:
 	void timerISR() {
 		if (state == e_toStepHigh) {
 			stepHighISR();
-			if (identifier == 'Z') {
-				ld3.low();
-				ld5.high();
-				ld4.low();
-			}
 		} else if(state == e_toStepLow) {
 			stepLowISR();
-			if (identifier == 'Z') {
-				ld3.low();
-				ld4.high();
-				ld5.low();
-			}
 		} else if(state == e_toIdle) {
-			if (identifier == 'Z') {
-				ld3.high();
-				ld4.low();
-				ld5.low();
-			}
 			state = e_idle;
 			processManager.requestProcess(advertiseStopProcessRequest);
 		}
@@ -167,49 +143,43 @@ private:
 		timer.start();
 	}
 
-	//task functions
+	// Task functions.
+
 	void stepHighISR() {
-		//set pin high
-		// ld5.low();
-		// ld3.high();
+		// Set pin high.
 		driver.setStepPin(true);
-		//indicate next state-step is to make it low
+		// Indicate next state-step is to make it low.
 		state = e_toStepLow;
-		//schedule end of high-phase
+		// Schedule end of high-phase.
 		timer.setTime(TimeValue(stepHighTime));
 		timer.start();
-		// steppingControlTimedTask.setTimeUntilTaskStart(TimeValue(stepHighTime));
-		// timingManager.addTask(&steppingControlTimedTask);
 	}
 
 	void stepLowISR() {
-		//make pin low
+		// Make pin low.
 		driver.setStepPin(false);
 
-		//reduce number of steps to take
+		// Reduce number of steps to take and update position index.
 		if (steps > 0) {
 			steps--;
+			positionIndex++;
 		} else if (steps < 0) {
 			steps++;
+			positionIndex--;
 		}
-		//check if steps are done
+
+		// Check if steps are done.
 		if (steps == 0 || stopping) {
-			//steps are done
+			// Steps are done.
 			state = e_toIdle;
 		} else {
-			//need another step
+			// Need another step.
 			state = e_toStepHigh;
 		}
-		// ld3.low();
-		// ld5.high();
 
-		//update position index
-		positionIndex++;
-		//schedule end of low-phase
+		// Schedule end of low-phase.
 		timer.setTime(TimeValue(stepLowTime));
 		timer.start();
-		// steppingControlTimedTask.setTimeUntilTaskStart(TimeValue(stepLowTime));
-		// timingManager.addTask(&steppingControlTimedTask);
 	}
 
 	void advertiseStop() {
@@ -217,12 +187,12 @@ private:
 		buffer[5] = identifier;
 		debug(buffer, sizeof("Step[*] -> stop\n")-1);
 
-		/// Advertise
+		/// Advertise.
 		while (stoppedSubscriberList != nullptr) {
-			//first remove first from list
+			// First remove first from list.
 			Subscriber * current = stoppedSubscriberList;
 			stoppedSubscriberList = stoppedSubscriberList->getNext();
-			//then add to process managers to-call list.
+			// Then add to process managers to-call list.
 			processManager.requestProcess(current->getProcessRequest());
 		}
 	}

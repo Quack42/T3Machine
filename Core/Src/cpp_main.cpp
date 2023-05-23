@@ -22,7 +22,16 @@
 // TimingTest0<Platform> timingTest0(processManager, timingManager, ld3, ld6);
 // TimingTest1<Platform> timingTest1(ld3, ld6, steppingTaskTimer);
 LineBuffer<100> lineBuffer;
-GCodeInterpreter<Platform, T3Machine<Platform,M415C<Platform>,M415C<Platform>,DRV8825_MovementControl<Platform>> > gCodeInterpreter(processManager, t3Machine);
+GCodeInterpreter<
+	Platform,
+	T3Machine<
+		Platform,
+		M415C<Platform>,
+		M415C<Platform>,
+		DRV8825_MovementControl<Platform>,
+		Relay<Platform>
+	>
+> gCodeInterpreter(processManager, t3Machine);
 
 
 void debug(const char * msg, unsigned int msgLength, bool addNewLine) {
@@ -55,6 +64,7 @@ void cpp_main(void) {
 	sensor_X.init();
 	sensor_Y.init();
 	sensor_Z.init();
+	dcMotorPin.init(GPIO_PIN_SET);
 
 	// Initialize filters.
 	button_filter.init(button.getValue());
@@ -101,14 +111,26 @@ void cpp_main(void) {
 	button.setSubscriberFunction([](bool pinValue){button_filter.input(pinValue);});
 	// button_filter.setSubscriberFunction([](bool pinValue){timingTest1.input(pinValue);});
 	// button_filter.setSubscriberFunction([](bool pinValue){if (pinValue) {t3Machine.startMoving();}});
-	button_filter.setSubscriberFunction([](bool pinValue){if (pinValue) {t3Machine.startHoming();}});
+	// button_filter.setSubscriberFunction([](bool pinValue){if (pinValue) {t3Machine.startHoming();}});
+	button_filter.setSubscriberFunction([](bool pinValue){
+		if (pinValue) {
+			// ld3.high();
+			// ld4.low();
+			// dcMotorDriver.off();
+		} else {
+			// ld4.high();
+			// ld3.low();
+			// dcMotorDriver.on();
+			gCodeInterpreter.unpauze();
+		}
+	});
 
 	vcom.setSubscriberFunction([](uint8_t data){
 			// debug((char*)&data, 1, true);
 			lineBuffer.input(data);
 	});
 	lineBuffer.setSubscriberFunction([](const char * line, uint32_t lineLength){
-			debug(line, lineLength, true);
+			debug("line received", sizeof("line received")-1, true);
 			gCodeInterpreter.input(line, lineLength);
 	});
 	// lineBuffer.setSubscriberFunction([](const char * line, uint32_t lineLength){vcom.transmit(reinterpret_cast<const uint8_t *>(line), lineLength);});

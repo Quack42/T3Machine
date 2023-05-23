@@ -54,6 +54,14 @@ public:
 			if (!convertGCodeCode(command)) {
 				return false;
 			}
+		} else if (gCodeCodeString.data[0] == 'T') {
+			if (!convertTCodeCode(command)) {
+				return false;
+			}
+		} else if (gCodeCodeString.data[0] == 'M') {
+			if (!convertMCodeCode(command)) {
+				return false;
+			}
 		}
 
 		if (!convertParameters(command)) {
@@ -81,6 +89,44 @@ private:
 		}
 
 		command->setCode(static_cast<GCode_e>(e_GBase + gValue));
+		return true;
+	}
+
+	bool convertTCodeCode(GCodeCommand * command) { 	//TODO: mostly redundant with convertGCodeCode
+		const char kNumbers[11] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '\0'};
+
+		unsigned int gValue = 0;
+		for (unsigned int i=0; i < gCodeCodeString.dataLength-1; i++) {
+			if (!str_contains(kNumbers, gCodeCodeString.data[1+i])) {
+				// Data at this point must be a number. This is not a number so return false, indicating failure.
+				return false;
+			}
+			// Shift everything up 1 digit.
+			gValue *= 10;
+			// Add new number as lowest digit (reading from left to right).
+			gValue += (gCodeCodeString.data[1+i] - '0');
+		}
+
+		command->setCode(static_cast<GCode_e>(e_TBase + gValue));
+		return true;
+	}
+
+	bool convertMCodeCode(GCodeCommand * command) { 	//TODO: mostly redundant with convertGCodeCode
+		const char kNumbers[11] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '\0'};
+
+		unsigned int gValue = 0;
+		for (unsigned int i=0; i < gCodeCodeString.dataLength-1; i++) {
+			if (!str_contains(kNumbers, gCodeCodeString.data[1+i])) {
+				// Data at this point must be a number. This is not a number so return false, indicating failure.
+				return false;
+			}
+			// Shift everything up 1 digit.
+			gValue *= 10;
+			// Add new number as lowest digit (reading from left to right).
+			gValue += (gCodeCodeString.data[1+i] - '0');
+		}
+
+		command->setCode(static_cast<GCode_e>(e_MBase + gValue));
 		return true;
 	}
 
@@ -191,7 +237,7 @@ private:
 	}
 
 	bool parseGCodeCode() {
-		const char kGCodeChar[2] = {'G', '\0'};
+		const char kGCodeChar[4] = {'G', 'T', 'M', '\0'};
 		if (str_contains(kGCodeChar, *dataToParse)) {
 			// Store start of GCode string.
 			gCodeCodeString.data = dataToParse;

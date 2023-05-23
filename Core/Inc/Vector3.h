@@ -22,15 +22,15 @@ public:
 	}
 
 	Vector3<T> operator-(const Vector3<T> & rhs) const {
-		return Vector3<T>(	 x-rhs.x,
-							 y-rhs.y,
-							 z-rhs.z );
+		return Vector3<T>(	 x - rhs.x,
+							 y - rhs.y,
+							 z - rhs.z );
 	}
 
 	Vector3<T> operator+(const Vector3<T> & rhs) const {
-		return Vector3<T>(	 x+rhs.x,
-							 y+rhs.y,
-							 z+rhs.z );
+		return Vector3<T>(	 x + rhs.x,
+							 y + rhs.y,
+							 z + rhs.z );
 	}
 
 	T & getRefX() {

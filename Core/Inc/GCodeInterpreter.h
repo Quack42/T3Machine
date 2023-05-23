@@ -23,7 +23,7 @@ private:
 	ControlledDevice & controlledDevice;
 
 	/// Components
-	CyclicBuffer<GCodeCommand, 2> queue;
+	CyclicBuffer<GCodeCommand, kCommandQueueSize> queue;
 	GCodeCommand activeCommand;
 	bool hasActiveCommand = false;
 	ProcessRequest executeCommandProcessRequest;
@@ -33,6 +33,14 @@ private:
 	Subscriber controlledDeviceIdleSubscription;
 
 	bool relativePositioning = false;
+	bool inputIsMM = true;
+	enum FeedRateMode_e {
+		e_feedRateInverseTime,
+		e_feedRateUnitsPerMinute,
+		e_feedRateUnitsPerRevolution,
+	} feedRate = e_feedRateUnitsPerMinute;
+	bool pauzed = false;
+	GCode_e lastTxCommand = e_T0; 	//Shows which tool was selected last
 public:
 	GCodeInterpreter(	ProcessManager<Platform> & processManager,
 						ControlledDevice & controlledDevice) :
@@ -86,6 +94,9 @@ public:
 		// Initiate excecution.
 		if (!queue.isEmpty()) {
 			processManager.requestProcess(executeCommandProcessRequest);
+			debug("GCI.input:!queue.isEmpty()\n", sizeof("GCI.input:!queue.isEmpty()\n")-1);
+		} else {
+			debug("GCI.input:queue.isEmpty()\n", sizeof("GCI.input:queue.isEmpty()\n")-1);
 		}
 
 		// TODO: Acknowledge commands.
@@ -96,10 +107,15 @@ public:
 		return true;
 	}
 
+	void unpauze() {
+		this->pauzed = false;
+		processManager.requestProcess(executeCommandProcessRequest);
+	}
+
 private:
 	void executeCommand() {
 		debugToHost("eC\n");
-		if (!hasActiveCommand && !queue.isEmpty()) {
+		if (!hasActiveCommand && !queue.isEmpty() && !pauzed) {
 			debugToHost("Exec\n");
 
 			// Check if the buffer is full before we read from it.
@@ -107,7 +123,6 @@ private:
 
 			// Get a command to execute.
 			activeCommand = queue.read();
-			hasActiveCommand = true;
 
 			// Make sure the host can keep the buffer full
 			if (queueIsFull && queue.hasSpace()) { 	//NOTE: queue.hasSpace() is redundant after queue.read().
@@ -127,6 +142,18 @@ private:
 					i++;
 					// Compute the codeNumber.
 					codeNumber = code - e_GBase;
+				} else if (code >= e_TMin && code <= e_TMax) {
+					// Write the GCode identifier character into the buffer.
+					buffer[i] = 'T';
+					i++;
+					// Compute the codeNumber.
+					codeNumber = code - e_TBase;
+				} else if (code >= e_MMin && code <= e_MMax) {
+					// Write the GCode identifier character into the buffer.
+					buffer[i] = 'M';
+					i++;
+					// Compute the codeNumber.
+					codeNumber = code - e_MBase;
 				}
 
 				// Write the codeNumber value into the buffer.
@@ -151,17 +178,28 @@ private:
 				i++;
 
 				debug(buffer, i);
-
 			}
+
 			// Initiate command.
 			switch(activeCommand.getCode()) {
 				case e_G0:
 				case e_G1:
 					debugToHost("G0-1\n");
+					hasActiveCommand = true;
 					g0_1(activeCommand);
+					break;
+				// case e_G2:
+				// 	debugToHost("G2\n");
+				// 	hasActiveCommand = true;
+				// 	g2(activeCommand);
+				// 	break;
+				case e_G21:
+					debugToHost("G21\n");
+					g21(activeCommand);
 					break;
 				case e_G28:
 					debugToHost("G28\n");
+					hasActiveCommand = true;
 					g28(activeCommand);
 					break;
 				case e_G90:
@@ -176,9 +214,44 @@ private:
 					debugToHost("G92\n");
 					g92(activeCommand);
 					break;
+				case e_G94:
+					debugToHost("G94\n");
+					g94(activeCommand);
+					break;
+				case e_M0:
+				case e_M1:
+					debugToHost("M0-1\n");
+					m0_1(activeCommand);
+					break;
+				case e_M3:
+					debugToHost("M3\n");
+					m3(activeCommand);
+					break;
+				case e_M5:
+					debugToHost("-M5\n");
+					m5(activeCommand);
+					break;
+				case e_M6:
+					debugToHost("M6\n");
+					m6(activeCommand);
+					break;
+				case e_T0:
+				case e_T1:
+				case e_T2:
+				case e_T3:
+				case e_T4:
+				case e_T5:
+				case e_T6:
+					debugToHost("T0-6\n");
+					t0_6(activeCommand);
+					break;
 				default:
 					//TODO: Indicate something went wrong.
 					return;
+			}
+
+			if(!hasActiveCommand && !queue.isEmpty() && !pauzed) {
+				processManager.requestProcess(executeCommandProcessRequest);
 			}
 		}
 	}
@@ -190,11 +263,23 @@ private:
 		debug("GCI:T3Idle\n", sizeof("GCI:T3Idle\n")-1);
 
 		// Execution done.
-		hasActiveCommand = false;
+		switch (activeCommand.getCode()) {
+			case e_G0:
+			case e_G1:
+			// case e_G2:
+			case e_G28:
+				hasActiveCommand = false;
+				break;
+			default:
+				break;
+		}
 
 		// Initiate excecution.
 		if (!queue.isEmpty()) {
 			processManager.requestProcess(executeCommandProcessRequest);
+			debug("GCI:!queue.isEmpty()\n", sizeof("GCI:!queue.isEmpty()\n")-1);
+		} else {
+			debug("GCI:queue.isEmpty()\n", sizeof("GCI:queue.isEmpty()\n")-1);
 		}
 	}
 
@@ -270,6 +355,18 @@ private:
 		} else {
 			return controlledDevice.moveAbsoluteLinear(hasMovementX, movementX, hasMovementY, movementY, hasMovementZ, movementZ);
 		}
+	}
+
+	bool g02(GCodeCommand & command) { 	//TODO: this function
+		//X, Y (,Z) are the coordinates to move to
+		//I, J, (,K) are the coordinates of the rotational point (incremental or absoluteness depends on another command; I hear incremental is the most common one)
+		return false;
+	}
+
+	bool g21(GCodeCommand & command) {
+		setInputAsMM();
+		hasActiveCommand = false;
+		return true;
 	}
 
 	bool g28(GCodeCommand & command) {
@@ -390,6 +487,54 @@ private:
 		return true;
 	}
 
+	bool g94(GCodeCommand & command) {
+		// "Feedrate is units[mm||inches]/minute"
+		this->feedRate = e_feedRateUnitsPerMinute;
+		return true;
+	}
+
+	bool m0_1(GCodeCommand & command) {
+		pauzePrompt();
+		return true;
+	}
+
+	bool m3(GCodeCommand & command) {
+		// https://marlinfw.org/docs/gcode/M003.html
+		// Spindle CW / Laser On
+		//TODO: Do I need to consider lastTxCommand ?
+		controlledDevice.setDrillState(true);
+		return true;
+	}
+
+	bool m5(GCodeCommand & command) {
+		// https://marlinfw.org/docs/gcode/M005.html
+		// Spindle / Laser Off
+		//TODO: Do I need to consider lastTxCommand ?
+		controlledDevice.setDrillState(false);
+		return true;
+	}
+
+	bool m6(GCodeCommand & command) {
+		//Stop the drill
+		controlledDevice.setDrillState(false);
+		//Pauze and prompt user til continue
+		pauzePrompt();
+		//TODO: notify user of tool change
+		char buffer[] = "Expecting tool change:[TX]\n";
+		buffer[24] = '0' + (lastTxCommand - e_TBase);
+		DEBUG_VCOM(buffer);
+		return true;
+	}
+
+	bool t0_6(GCodeCommand & command) {
+		lastTxCommand = command.getCode();
+
+		char buffer[] = "Select tool:[TX]\n";
+		buffer[14] = '0' + (command.getCode() - e_TBase);
+		DEBUG_VCOM(buffer);
+		return true;
+	}
+
 	void _sendToHost(const char * msg, uint32_t msgLength) {
 		if (channelToHostFunction) {
 			channelToHostFunction(msg, msgLength);
@@ -415,4 +560,16 @@ private:
 	void debugToHost(const char * nullTerminatedMessage) {
 		debugToHost(nullTerminatedMessage, strlen(nullTerminatedMessage));
 	}
+
+	void setInputAsMM() {
+		this->inputIsMM = true;
+	}
+
+	void pauzePrompt() {
+		this->pauzed = true;
+		DEBUG_VCOM("Pauzed\n");
+	}
 };
+
+
+// https://www.youtube.com/watch?v=4SZ0PtO79Mg

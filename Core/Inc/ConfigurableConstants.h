@@ -48,4 +48,5 @@ constexpr float kMovementRangeZ = 10.f; 	// In mm. 	//TODO: find this
 
 // GCodeInterpreter
 constexpr unsigned int kMaximumNumberOfParameters = 10;
+constexpr unsigned int kCommandQueueSize = 2; 	//TODO: make this 10 or so.
 constexpr bool kDebugMode = true;

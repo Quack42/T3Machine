@@ -11,6 +11,42 @@ inline bool str_contains(const char * str, char c) {
 	return false;
 }
 
+inline unsigned int uint_to_str(char * data, unsigned int maxLength, unsigned int uintToConvert) {
+	unsigned int i=0;
+	data[i] = '0'; 	//default value; to fix the "0 doesn't seem to have digits, mathematically" problem.
+
+	// Compute the number of digits.
+	unsigned int digits = 0;
+	{
+		int uintToConvertTemp = uintToConvert;
+		while (uintToConvertTemp) {
+			uintToConvertTemp /= 10;
+			digits++;
+		}
+	}
+
+	// Check if it fits in the target 'data' buffer.
+	if (digits > maxLength) {
+		// It doesn't fit. Write down X.
+		data[i] = 'X';
+		i++;
+		return i;
+	}
+
+	// Convert the value to digits.
+	if (digits == 0) {
+		i++;
+	} else {
+		for (unsigned int i2=0; i2 < digits; i2++) {
+			data[i+(digits-1)-i2] = '0' + uintToConvert % 10;
+			uintToConvert /= 10;
+		}
+		i += digits;
+	}
+
+	return i;
+}
+
 inline unsigned int int_to_str(char * data, unsigned int maxLength, int intToConvert) {
 	unsigned int i=0;
 	data[i] = '0'; 	//default value; to fix the "0 doesn't seem to have digits, mathematically" problem.
@@ -24,46 +60,26 @@ inline unsigned int int_to_str(char * data, unsigned int maxLength, int intToCon
 		intToConvert = -intToConvert;
 	}
 
-	// Compute the number of digits.
-	unsigned int digits = 0;
-	{
-		int intToConvertTemp = intToConvert;
-		while (intToConvertTemp) {
-			intToConvertTemp /= 10;
-			digits++;
-		}
-	}
-
-	// Check if it fits in the target 'data' buffer.
-	if (digits > maxLength) {
-		// It doesn't fit. Overwrite with X's.
-		data[i] = 'X';
-		i++;
-		return i;
-	}
-
-	// Convert the value to digits.
-	if (digits == 0) {
-		i++;
-	} else {
-		for (unsigned int i2=0; i2 < digits; i2++) {
-			data[i+(digits-1)-i2] = '0' + intToConvert % 10;
-			intToConvert /= 10;
-		}
-		i += digits;
-	}
-
-	return i;
+	return i + uint_to_str(&data[i], maxLength-i, intToConvert);
 }
 
 inline unsigned int float_to_str(char * data, unsigned int maxLength, float floatToConvert) {
 	unsigned int i=0;
 	data[i] = '0'; 	//default value; to fix the "0 doesn't seem to have digits, mathematically" problem.
 
+	if (floatToConvert < 0) {
+		// Given number is negative.
+		// Add a '-' to the data.
+		data[i] = '-';
+		i++;
+		// Flip signedness to make sure remainder of the function handles it normally.
+		floatToConvert = -floatToConvert;
+	}
+
 	floatToConvert += 0.0005f; 	// For rounding, needs to be added early.
 
 	// Convert whole numbers to int.
-	i += int_to_str(&data[i], maxLength, floatToConvert);
+	i += uint_to_str(&data[i], maxLength, floatToConvert);
 
 	// Convert remainder of float to an integer.
 	// First get the remainder.
@@ -72,9 +88,13 @@ inline unsigned int float_to_str(char * data, unsigned int maxLength, float floa
 	floatDecimals *= 1000.f;
 	// Cut off remainder
 	int intDecimals = floatDecimals;
+	// Flip signedness of intDecimals; it's already handled at the start.
+	if (intDecimals < 0) {
+		intDecimals = -intDecimals;
+	}
 
 	// If there are decimals to convert, add a '.'
-	if (i < maxLength && intDecimals > 0) {
+	if (i < maxLength) {
 		data[i] = '.';
 		i++;
 	}
@@ -85,11 +105,11 @@ inline unsigned int float_to_str(char * data, unsigned int maxLength, float floa
 		digits--;
 		intDecimals /= 10;
 	}
-
+	
 	// Add decimals to the buffer.
 	if (digits + i < maxLength) {
-		i += int_to_str(&data[i], maxLength-i, intDecimals);
+		i += uint_to_str(&data[i], maxLength-i, intDecimals);
 	}
-
+	
 	return i;
 }

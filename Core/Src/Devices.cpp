@@ -22,6 +22,9 @@ OutputPin<Platform> directionPin_X(directionPin_X_pinIdentifier);
 OutputPin<Platform> directionPin_Y(directionPin_Y_pinIdentifier);
 OutputPin<Platform> directionPin_Z(directionPin_Z_pinIdentifier);
 
+OutputPin<Platform> dcMotorPin(dcMotorPin_pinIdentifier);
+
+
 //interrupt pins
 ExternalInterruptPin<Platform> button(processManager, button_pinIdentifier);
 ExternalInterruptPin<Platform> sensor_X(processManager, sensor_X_pinIdentifier); 	//Active Low
@@ -41,17 +44,20 @@ VCOM_Buffered<Platform, kVCOM_TXBufferSize, kVCOM_RXBufferSize> vcom(processMana
 M415C<Platform> m415c_X(stepPin_X, directionPin_X);
 M415C<Platform> m415c_Y(stepPin_Y, directionPin_Y);
 DRV8825_MovementControl<Platform> drv8825_Z(stepPin_Z, directionPin_Z);
+Relay<Platform> dcMotorDriver(dcMotorPin);
 T3Machine<
 	Platform,
 	M415C<Platform>,
 	M415C<Platform>,
-	DRV8825_MovementControl<Platform>
+	DRV8825_MovementControl<Platform>,
+	Relay<Platform>
 	> t3Machine(
 		processManager,
 		timingManager,
 		m415c_X,
 		m415c_Y,
 		drv8825_Z,
+		dcMotorDriver,
 		steppingTaskXTimer,
 		steppingTaskYTimer,
 		steppingTaskZTimer

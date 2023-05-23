@@ -15,6 +15,7 @@
 #include "VCOM.h"
 #include "M415C.h"
 #include "DRV8825.h"
+#include "Relay.h"
 #include "T3Machine.h"
 
 //platform
@@ -33,6 +34,8 @@ extern OutputPin<Platform> stepPin_Z;
 extern OutputPin<Platform> directionPin_X;
 extern OutputPin<Platform> directionPin_Y;
 extern OutputPin<Platform> directionPin_Z;
+
+extern OutputPin<Platform> dcMotorPin;
 
 //interrupt pins
 extern ExternalInterruptPin<Platform> button;
@@ -55,9 +58,11 @@ extern VCOM_Buffered<Platform, kVCOM_TXBufferSize, kVCOM_RXBufferSize> vcom;
 extern M415C<Platform> m415c_X;
 extern M415C<Platform> m415c_Y;
 extern DRV8825_MovementControl<Platform> drv8825_Z;
+extern Relay<Platform> dcMotorDriver;
 extern T3Machine<
 	Platform,
 	M415C<Platform>,
 	M415C<Platform>,
-	DRV8825_MovementControl<Platform>
+	DRV8825_MovementControl<Platform>,
+	Relay<Platform>
 	> t3Machine;

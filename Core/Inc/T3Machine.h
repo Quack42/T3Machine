@@ -14,7 +14,10 @@
 // Components
 #include "Vector3.h"
 
-template<typename Platform, typename DriverX, typename DriverY, typename DriverZ>
+// Util
+#include "stringUtil.h" 	//NOTE: Only for debug purposes; no functional use here.
+
+template<typename Platform, typename DriverX, typename DriverY, typename DriverZ, typename DrillControl>
 class T3Machine {
 private:
 	/// References
@@ -23,6 +26,7 @@ private:
 	DriverX & driverX;
 	DriverY & driverY;
 	DriverZ & driverZ;
+	DrillControl & drillControl;
 
 	/// Variables
 	enum {
@@ -64,6 +68,7 @@ public:
 				DriverX & driverX,
 				DriverY & driverY,
 				DriverZ & driverZ,
+				DrillControl & drillControl,
 				Timer<Platform> & steppingTaskXTimer,
 				Timer<Platform> & steppingTaskYTimer,
 				Timer<Platform> & steppingTaskZTimer
@@ -73,6 +78,7 @@ public:
 			driverX(driverX),
 			driverY(driverY),
 			driverZ(driverZ),
+			drillControl(drillControl),
 			state_e(e_idle),
 			absoluteStepPosition(0,0,0),
 			offset(0,0,0),
@@ -86,9 +92,9 @@ public:
 			homingAxisTask_Y(processManager, steppingTask_Y, absoluteStepPosition.getRefY()),
 			homingAxisTask_Z(processManager, steppingTask_Z, absoluteStepPosition.getRefZ()),
 			homingTask(homingAxisTask_X, homingAxisTask_Y, homingAxisTask_Z),
-			steppingTaskXStopSubscription(std::bind(&T3Machine<Platform, DriverX, DriverY, DriverZ>::steppingTaskXStopped, this)),
-			steppingTaskYStopSubscription(std::bind(&T3Machine<Platform, DriverX, DriverY, DriverZ>::steppingTaskYStopped, this)),
-			steppingTaskZStopSubscription(std::bind(&T3Machine<Platform, DriverX, DriverY, DriverZ>::steppingTaskZStopped, this))
+			steppingTaskXStopSubscription(std::bind(&T3Machine<Platform, DriverX, DriverY, DriverZ, DrillControl>::steppingTaskXStopped, this)),
+			steppingTaskYStopSubscription(std::bind(&T3Machine<Platform, DriverX, DriverY, DriverZ, DrillControl>::steppingTaskYStopped, this)),
+			steppingTaskZStopSubscription(std::bind(&T3Machine<Platform, DriverX, DriverY, DriverZ, DrillControl>::steppingTaskZStopped, this))
 	{
 	}
 
@@ -141,6 +147,14 @@ public:
 		offset.z = newZPosition;
 	}
 
+	void setDrillState(bool on) {
+		if (on) {
+			drillControl.on();
+		} else {
+			drillControl.off();
+		}
+	}
+
 
 	bool homingSequence(bool homeX, bool homeY, bool homeZ) {
 		return homingTask.start(homeX, homeY, homeZ);
@@ -158,7 +172,14 @@ public:
 	bool moveAbsoluteLinear(bool moveX, float x, bool moveY, float y, bool moveZ, float z) {
 		//TODO: Throw a tantrum if target position is out of bounds. Also consider moveX/Y/Z booleans.
 		//TODO: Throw a tantrum if steppingTasks aren't done.
-		
+		{
+			char buffer[] = "AT:[       ][       ][       ]\n";
+			int_to_str(&buffer[4], 7, absoluteStepPosition.x);
+			int_to_str(&buffer[13], 7, absoluteStepPosition.y);
+			int_to_str(&buffer[22], 7, absoluteStepPosition.z);
+			debug(buffer, sizeof("AT:[       ][       ][       ]\n")-1);
+		}
+
 		// Set target position; needs to be done first.
 		targetPosition = Vector3f(
 				moveX ? x : targetPosition.x,
@@ -169,65 +190,41 @@ public:
 		Vector3i stepsToTake = calculateTargetStepOffset() - absoluteStepPosition;
 
 		{
-			int stepsToTakeX = stepsToTake.x;
-			bool negative = false;
-			if (stepsToTakeX < 0) {
-				stepsToTakeX *= -1;
-				negative = true;
-			}
-			char buffer[] = "T3:stepsToTake.x:[      0][M]\n";
-			int i = 0;
-			while (stepsToTakeX) {
-				buffer[24-i] = '0' + (stepsToTakeX % 10);
-				stepsToTakeX /= 10;
-				i++;
-			}
-			if (negative) {
-				buffer[24-i] = '-';
-			}
-			buffer[27] = '0' + moveX;
-			debug(buffer, sizeof("T3:stepsToTake.x:[       ][M]\n")-1);
+			char buffer[] = "TO:[       ][       ][       ]\n";
+			int_to_str(&buffer[4], 7, absoluteStepPosition.x + stepsToTake.x);
+			int_to_str(&buffer[13], 7, absoluteStepPosition.y + stepsToTake.y);
+			int_to_str(&buffer[22], 7, absoluteStepPosition.z + stepsToTake.z);
+			debug(buffer, sizeof("TO:[       ][       ][       ]\n")-1);
 		}
+
 		{
-			int stepsToTakeY = stepsToTake.y;
-			bool negative = false;
-			if (stepsToTakeY < 0) {
-				stepsToTakeY *= -1;
-				negative = true;
-			}
-			char buffer[] = "T3:stepsToTake.y:[      0][M]\n";
-			int i = 0;
-			while (stepsToTakeY) {
-				buffer[24-i] = '0' + (stepsToTakeY % 10);
-				stepsToTakeY /= 10;
-				i++;
-			}
-			if (negative) {
-				buffer[24-i] = '-';
-			}
-			buffer[27] = '0' + moveY;
-			debug(buffer, sizeof("T3:stepsToTake.y:[       ][M]\n")-1);
+			char buffer[] = "T3:steps:[       ][M] [       ][M] [       ][M]\n";
+			int_to_str(&buffer[10], 7, stepsToTake.x);
+			int_to_str(&buffer[23], 7, stepsToTake.y);
+			int_to_str(&buffer[36], 7, stepsToTake.z);
+			buffer[19] = '0' + moveX;
+			buffer[32] = '0' + moveY;
+			buffer[45] = '0' + moveZ;
+			debug(buffer, sizeof("T3:steps:[       ][M] [       ][M] [       ][M]\n")-1);
 		}
-		{
-			int stepsToTakeZ = stepsToTake.z;
-			bool negative = false;
-			if (stepsToTakeZ < 0) {
-				stepsToTakeZ *= -1;
-				negative = true;
-			}
-			char buffer[] = "T3:stepsToTake.z:[      0][M]\n";
-			int i = 0;
-			while (stepsToTakeZ) {
-				buffer[24-i] = '0' + (stepsToTakeZ % 10);
-				stepsToTakeZ /= 10;
-				i++;
-			}
-			if (negative) {
-				buffer[24-i] = '-';
-			}
-			buffer[27] = '0' + moveZ;
-			debug(buffer, sizeof("T3:stepsToTake.z:[       ][M]\n")-1);
-		}
+		// {
+		// 	char buffer[] = "T3:stepsToTake.x:[       ][M]\n";
+		// 	int_to_str(&buffer[18], 7, stepsToTake.x);
+		// 	buffer[27] = '0' + moveX;
+		// 	debug(buffer, sizeof("T3:stepsToTake.x:[      0][M]\n")-1);
+		// }
+		// {
+		// 	char buffer[] = "T3:stepsToTake.y:[       ][M]\n";
+		// 	int_to_str(&buffer[18], 7, stepsToTake.y);
+		// 	buffer[27] = '0' + moveY;
+		// 	debug(buffer, sizeof("T3:stepsToTake.y:[      0][M]\n")-1);
+		// }
+		// {
+		// 	char buffer[] = "T3:stepsToTake.z:[       ][M]\n";
+		// 	int_to_str(&buffer[18], 7, stepsToTake.z);
+		// 	buffer[27] = '0' + moveZ;
+		// 	debug(buffer, sizeof("T3:stepsToTake.z:[      0][M]\n")-1);
+		// }
 
 
 		//TODO: set steppingTask* time

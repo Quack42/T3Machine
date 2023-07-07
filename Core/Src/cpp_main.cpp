@@ -54,7 +54,7 @@ void cpp_main(void) {
 	directionPin_X.init(GPIO_PIN_SET);
 	stepPin_Y.init(GPIO_PIN_SET);
 	directionPin_Y.init(GPIO_PIN_SET);
-	stepPin_Z.init(GPIO_PIN_SET);
+	stepPin_Z.init(GPIO_PIN_RESET);
 	directionPin_Z.init(GPIO_PIN_SET);
 	ld3.init();
 	ld4.init();
